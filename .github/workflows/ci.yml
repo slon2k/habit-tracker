@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dotnet:
+    name: Build and Test (.NET)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore HabitTracker.slnx
+
+      - name: Build
+        run: dotnet build HabitTracker.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test HabitTracker.slnx --configuration Release --no-build --verbosity normal
+
+  docker:
+    name: Build API Image (Docker)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build habittracker-api image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/HabitTracker.Api/Dockerfile
+          push: false
+          tags: habittracker-api:ci
