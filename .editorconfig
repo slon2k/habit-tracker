@@ -22,6 +22,9 @@ indent_size = 2
 # C# files
 [*.cs]
 
+# CA1515 is too noisy for app-style projects where framework-discovered public types are expected.
+dotnet_diagnostic.CA1515.severity = none
+
 #### Core EditorConfig Options ####
 
 # Indentation and spacing
