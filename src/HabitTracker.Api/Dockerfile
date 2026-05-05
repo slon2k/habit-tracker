@@ -4,6 +4,7 @@ WORKDIR /src
 COPY ["src/HabitTracker.Api/HabitTracker.Api.csproj", "src/HabitTracker.Api/"]
 COPY ["Directory.Packages.props", "./"]
 COPY ["Directory.Build.props", "./"]
+COPY [".editorconfig", "./"]
 RUN dotnet restore "src/HabitTracker.Api/HabitTracker.Api.csproj"
 
 COPY ["src/HabitTracker.Api/", "src/HabitTracker.Api/"]
