@@ -27,6 +27,7 @@ builder.Services
     .WithTracing(tracing => tracing
         .AddSource("HabitTracker.Api")
         .AddAspNetCoreInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
         .AddHttpClientInstrumentation()
         .AddOtlpExporter())
     .WithMetrics(metrics => metrics
