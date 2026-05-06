@@ -1,3 +1,9 @@
+using HabitTracker.Api.Data;
+using HabitTracker.Api.Extensions;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
+
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -9,6 +15,11 @@ builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
 
 builder.Services.AddOpenApi();
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("Database"),
+        npgOptions => npgOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application)));
 
 builder.Services
     .AddOpenTelemetry()
@@ -37,6 +48,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    
+    await app.ApplyMigrationsAsync().ConfigureAwait(false);
 }
 
 app.UseHttpsRedirection();

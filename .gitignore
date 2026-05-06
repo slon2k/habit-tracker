@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Local Docker bind-mounted data
+.docker/
+
 # User-specific files
 *.rsuser
 *.suo
