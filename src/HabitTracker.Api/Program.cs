@@ -11,7 +11,9 @@ using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(opt => opt.ReturnHttpNotAcceptable = true)
+    .AddXmlDataContractSerializerFormatters();
+
 builder.Services.AddHealthChecks();
 
 builder.Services.AddOpenApi();

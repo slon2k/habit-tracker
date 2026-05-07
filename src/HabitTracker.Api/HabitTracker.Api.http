@@ -1,8 +1,11 @@
 @HabitTracker.Api_HostAddress = https://localhost:5001
-
-GET {{HabitTracker.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+# For HTTPS locally run with: dotnet run --launch-profile https
+# For Docker: https://localhost:5001
 
 ### Health Check
 GET {{HabitTracker.Api_HostAddress}}/health
+Accept: application/json
+
+### Get Habits
+GET {{HabitTracker.Api_HostAddress}}/habits/
 Accept: application/json
