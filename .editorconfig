@@ -25,6 +25,15 @@ indent_size = 2
 # CA1515 is too noisy for app-style projects where framework-discovered public types are expected.
 dotnet_diagnostic.CA1515.severity = none
 
+# CA2007: Do not directly await a Task. Modern .NET (Core) doesn't require ConfigureAwait in console/web apps.
+dotnet_diagnostic.CA2007.severity = none
+
+# CA1303: Do not pass literals as localized parameters. Not necessary for console apps and utilities.
+dotnet_diagnostic.CA1303.severity = none
+
+# CA1031: Catching generic Exception in console utilities/seeders is acceptable.
+dotnet_diagnostic.CA1031.severity = none
+
 #### Core EditorConfig Options ####
 
 # Indentation and spacing
