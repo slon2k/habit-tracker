@@ -49,22 +49,33 @@ Content-Type: application/json
 GET {{HabitTracker.Api_HostAddress}}/api/habits/{{habitId}}
 Accept: application/json
 
-### Update a Habit (replace {habitId} with actual ID)
+### Update a Habit (PUT - full replacement, all fields required)
 PUT {{HabitTracker.Api_HostAddress}}/api/habits/{{habitId}}
 Content-Type: application/json
 
 {
   "name": "Read",
-  "description": "Read pages from a book (Updated)",
+  "description": "Read more pages from a book",
   "frequency": {
     "type": "Daily",
     "timesPerPeriod": 1
   },
   "target": {
-    "value": 25,
+    "value": 40,
     "unit": "pages"
   },
   "reminderTime": "20:00:00"
+}
+
+### Partially Update a Habit (PATCH - selective update, only changed fields)
+PATCH {{HabitTracker.Api_HostAddress}}/api/habits/{{habitId}}
+Content-Type: application/json
+
+{
+  "description": "Read more pages from a book",
+  "target": {
+    "value": 50
+  }
 }
 
 ### Delete a Habit (replace {habitId} with actual ID)

@@ -161,6 +161,18 @@ public sealed class Habit
     }
 
     /// <summary>
+    /// Updates the milestone target value. Current is preserved.
+    /// </summary>
+    public void UpdateMilestoneTarget(int target)
+    {
+        if (target < 0)
+            throw new ArgumentException("Milestone target must be non-negative.", nameof(target));
+
+        Milestone.Target = target;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    /// <summary>
     /// Updates the habit's name.
     /// </summary>
     public void UpdateName(string name)

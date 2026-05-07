@@ -77,11 +77,11 @@ public class HabitsController : ControllerBase
     }
 
     /// <summary>
-    /// Update an existing habit.
+    /// Replace an entire habit (full replacement semantics).
     /// </summary>
     /// <param name="habitId">The habit ID.</param>
-    /// <param name="request">The update request.</param>
-    /// <returns>The updated habit as a DTO, or 404 if not found or not owned by the user.</returns>
+    /// <param name="request">The complete replacement request.</param>
+    /// <returns>The replaced habit as a DTO, or 404 if not found or not owned by the user.</returns>
     [HttpPut("{habitId:guid}")]
     public IActionResult UpdateHabit(Guid habitId, [FromBody] UpdateHabitDto request)
     {
@@ -98,49 +98,37 @@ public class HabitsController : ControllerBase
             return NotFound();
         }
 
-        // Apply updates (only fields that are set in the request)
-        if (!string.IsNullOrEmpty(request.Name))
+        // Apply full replacement via DTO mapping
+        request.ApplyToHabit(habit);
+
+        _dbContext.SaveChanges();
+        return Ok(HabitDto.FromEntity(habit));
+    }
+
+    /// <summary>
+    /// Partially update an existing habit. Only provided fields are updated; omitted fields are preserved.
+    /// </summary>
+    /// <param name="habitId">The habit ID.</param>
+    /// <param name="request">The partial update request.</param>
+    /// <returns>The updated habit as a DTO, or 404 if not found or not owned by the user.</returns>
+    [HttpPatch("{habitId:guid}")]
+    public IActionResult PatchHabit(Guid habitId, [FromBody] PartialUpdateHabitDto request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (!ModelState.IsValid)
         {
-            habit.UpdateName(request.Name);
+            return BadRequest(ModelState);
         }
 
-        if (request.Description != null)
+        var habit = _dbContext.Habits.FirstOrDefault(h => h.Id == habitId && h.UserId == _currentUserId);
+        if (habit == null)
         {
-            habit.UpdateDescription(request.Description);
+            return NotFound();
         }
 
-        if (request.Frequency != null && 
-            (!string.IsNullOrEmpty(request.Frequency.Type) || request.Frequency.TimesPerPeriod.HasValue))
-        {
-            var frequency = new Frequency
-            {
-                Type = string.IsNullOrEmpty(request.Frequency.Type) 
-                    ? habit.Frequency.Type 
-                    : Enum.Parse<FrequencyType>(request.Frequency.Type),
-                TimesPerPeriod = request.Frequency.TimesPerPeriod ?? habit.Frequency.TimesPerPeriod
-            };
-            habit.UpdateFrequency(frequency);
-        }
-
-        if (request.Target != null)
-        {
-            var target = new Target
-            {
-                Value = request.Target.Value ?? habit.Target.Value,
-                Unit = request.Target.Unit ?? habit.Target.Unit
-            };
-            habit.UpdateTarget(target);
-        }
-
-        if (request.ReminderTime != null)
-        {
-            habit.UpdateReminderTime(request.ReminderTime);
-        }
-
-        if (request.EndDate != null)
-        {
-            habit.UpdateEndDate(request.EndDate);
-        }
+        // Apply selective updates via DTO mapping
+        request.ApplyToHabit(habit);
 
         _dbContext.SaveChanges();
         return Ok(HabitDto.FromEntity(habit));
