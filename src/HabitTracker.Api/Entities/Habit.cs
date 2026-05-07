@@ -196,6 +196,26 @@ public sealed class Habit
     }
 
     /// <summary>
+    /// Updates the habit's target.
+    /// </summary>
+    public void UpdateTarget(Target target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+
+        Target = target;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Updates the habit's end date.
+    /// </summary>
+    public void UpdateEndDate(DateOnly? endDate)
+    {
+        EndDate = endDate;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    /// <summary>
     /// Updates the habit's reminder time.
     /// </summary>
     public void UpdateReminderTime(TimeOnly? reminderTime)

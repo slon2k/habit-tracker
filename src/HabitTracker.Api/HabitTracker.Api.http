@@ -1,11 +1,72 @@
-@HabitTracker.Api_HostAddress = https://localhost:5001
 # For HTTPS locally run with: dotnet run --launch-profile https
 # For Docker: https://localhost:5001
+@HabitTracker.Api_HostAddress = http://localhost:5000
+@habitId = 1918e441-f48a-4961-afca-bcf1a09777c3
 
 ### Health Check
 GET {{HabitTracker.Api_HostAddress}}/health
 Accept: application/json
 
-### Get Habits
-GET {{HabitTracker.Api_HostAddress}}/habits/
+### Get All Habits
+GET {{HabitTracker.Api_HostAddress}}/api/habits
+Accept: application/json
+
+### Create a New Habit (Binary - Daily Exercise)
+POST {{HabitTracker.Api_HostAddress}}/api/habits
+Content-Type: application/json
+
+{
+  "name": "Morning Run",
+  "description": "30 minutes of jogging",
+  "type": "Binary",
+  "frequency": {
+    "type": "Daily",
+    "timesPerPeriod": 1
+  },
+  "reminderTime": "06:00:00"
+}
+
+### Create a New Habit (Measurable - Read Pages)
+POST {{HabitTracker.Api_HostAddress}}/api/habits
+Content-Type: application/json
+
+{
+  "name": "Read",
+  "description": "Read pages from a book",
+  "type": "Measurable",
+  "frequency": {
+    "type": "Daily",
+    "timesPerPeriod": 1
+  },
+  "target": {
+    "value": 30,
+    "unit": "pages"
+  },
+  "reminderTime": "20:00:00"
+}
+
+### Get Single Habit (replace {habitId} with actual ID)
+GET {{HabitTracker.Api_HostAddress}}/api/habits/{{habitId}}
+Accept: application/json
+
+### Update a Habit (replace {habitId} with actual ID)
+PUT {{HabitTracker.Api_HostAddress}}/api/habits/{{habitId}}
+Content-Type: application/json
+
+{
+  "name": "Read",
+  "description": "Read pages from a book (Updated)",
+  "frequency": {
+    "type": "Daily",
+    "timesPerPeriod": 1
+  },
+  "target": {
+    "value": 25,
+    "unit": "pages"
+  },
+  "reminderTime": "20:00:00"
+}
+
+### Delete a Habit (replace {habitId} with actual ID)
+DELETE {{HabitTracker.Api_HostAddress}}/api/habits/{{habitId}}
 Accept: application/json
