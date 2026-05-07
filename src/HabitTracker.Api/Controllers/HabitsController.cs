@@ -68,28 +68,7 @@ public class HabitsController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        // Map DTO to domain objects
-        var frequency = new Frequency
-        {
-            Type = Enum.Parse<FrequencyType>(request.Frequency!.Type),
-            TimesPerPeriod = request.Frequency.TimesPerPeriod
-        };
-
-        var target = request.Target != null
-            ? new Target { Value = request.Target.Value, Unit = request.Target.Unit }
-            : new Target();
-
-        // Use factory method to create and validate the habit
-        var habit = Habit.Create(
-            _currentUserId,
-            request.Name,
-            request.Description,
-            Enum.Parse<HabitType>(request.Type),
-            frequency,
-            target,
-            request.EndDate,
-            request.ReminderTime
-        );
+        var habit = request.ToHabit(_currentUserId);
 
         _dbContext.Habits.Add(habit);
         _dbContext.SaveChanges();

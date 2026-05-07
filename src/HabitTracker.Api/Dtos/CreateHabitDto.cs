@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using HabitTracker.Api.Entities;
 
 namespace HabitTracker.Api.Dtos;
 
@@ -47,6 +48,35 @@ public class CreateHabitDto
     /// Optional time of day to remind the user about this habit.
     /// </summary>
     public TimeOnly? ReminderTime { get; set; }
+
+    /// <summary>
+    /// Maps this DTO to a domain Habit entity using the factory method.
+    /// </summary>
+    /// <param name="userId">The ID of the user who owns this habit.</param>
+    /// <returns>A new Habit instance.</returns>
+    public Habit ToHabit(Guid userId)
+    {
+        var frequency = new Frequency
+        {
+            Type = Enum.Parse<FrequencyType>(Frequency!.Type),
+            TimesPerPeriod = Frequency.TimesPerPeriod
+        };
+
+        var target = Target != null
+            ? new Target { Value = Target.Value, Unit = Target.Unit }
+            : new Target();
+
+        return Habit.Create(
+            userId,
+            Name,
+            Description,
+            Enum.Parse<HabitType>(Type),
+            frequency,
+            target,
+            EndDate,
+            ReminderTime
+        );
+    }
 }
 
 /// <summary>
