@@ -29,11 +29,28 @@ public class HabitsController : ControllerBase
     /// Get all habits for the current user.
     /// </summary>
     /// <returns>List of habits as DTOs.</returns>
-    [HttpGet]
-    public IActionResult GetHabits()
+        [HttpGet]
+    public IActionResult GetHabits([FromQuery] HabitsQueryParameters queryParameters)
     {
-        var habits = _dbContext.Habits
-            .Where(h => h.UserId == _currentUserId)
+        var habitsQuery = _dbContext.Habits
+            .Where(h => h.UserId == _currentUserId);
+
+        if (!string.IsNullOrWhiteSpace(queryParameters?.Search))
+        {
+            habitsQuery = habitsQuery.Where(h => h.Name.Contains(queryParameters.Search) || h.Description != null && h.Description.Contains(queryParameters.Search));
+        }
+
+        if (queryParameters?.Type.HasValue == true)
+        {
+            habitsQuery = habitsQuery.Where(h => h.Type == queryParameters.Type.Value);
+        }
+
+        if (queryParameters?.Status.HasValue == true)
+        {
+            habitsQuery = habitsQuery.Where(h => h.Status == queryParameters.Status.Value);
+        }
+
+        var habits = habitsQuery
             .OrderByDescending(h => h.CreatedAtUtc)
             .ToList();
 

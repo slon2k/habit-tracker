@@ -11,6 +11,22 @@ Accept: application/json
 GET {{HabitTracker.Api_HostAddress}}/api/habits
 Accept: application/json
 
+### Get Habits - Search
+GET {{HabitTracker.Api_HostAddress}}/api/habits?search=Run
+Accept: application/json
+
+### Get Habits - Filter by Type
+GET {{HabitTracker.Api_HostAddress}}/api/habits?type=Binary
+Accept: application/json
+
+### Get Habits - Filter by Status
+GET {{HabitTracker.Api_HostAddress}}/api/habits?status=Ongoing
+Accept: application/json
+
+### Get Habits - Combined Filters
+GET {{HabitTracker.Api_HostAddress}}/api/habits?search=Read&type=Measurable&status=Ongoing
+Accept: application/json
+
 ### Create a New Habit (Binary - Daily Exercise)
 POST {{HabitTracker.Api_HostAddress}}/api/habits
 Content-Type: application/json
