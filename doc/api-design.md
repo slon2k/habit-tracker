@@ -53,15 +53,17 @@ Authentication is handled through JWT tokens. All authenticated requests must in
 
 ```
 /habits
-  GET    - List habits for user
-  POST   - Create habit for user
+  GET    - List habits for user (returns summary: HabitDto, no tags)
+  POST   - Create habit for user (returns summary: HabitDto)
   /{habitId}
-    GET    - Get habit details
-    PUT    - Update habit
+    GET    - Get habit details (returns detail: HabitDetailsDto, includes tags[])
+    PUT    - Update habit (returns summary: HabitDto)
     DELETE - Delete habit
 ```
 
 Implicitly filtered by `userId` for all requests.
+
+> **Response shape note:** `GET /habits` and write endpoints (`POST`, `PUT`, `PATCH`) return the summary `HabitDto` which omits tags for payload efficiency. `GET /habits/{habitId}` returns `HabitDetailsDto` which includes the full `tags` array scoped to the current user.
 
 #### 2.2.3 Goals
 

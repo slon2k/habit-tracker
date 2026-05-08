@@ -42,15 +42,25 @@ public class HabitsController : ControllerBase
     }
 
     /// <summary>
-    /// Get a single habit by ID.
+    /// Get a single habit by ID, including its associated tags.
     /// </summary>
     /// <param name="habitId">The habit ID.</param>
-    /// <returns>The habit as a DTO, or 404 if not found or not owned by the user.</returns>
+    /// <returns>The habit details as a DTO (including tags), or 404 if not found or not owned by the user.</returns>
     [HttpGet("{habitId:guid}")]
     public IActionResult GetHabit(Guid habitId)
     {
         var habit = _dbContext.Habits.FirstOrDefault(h => h.Id == habitId && h.UserId == _currentUserId);
-        return habit == null ? NotFound() : Ok(HabitDto.FromEntity(habit));
+        if (habit == null)
+        {
+            return NotFound();
+        }
+
+        var tags = _dbContext.Tags
+            .Where(t => t.UserId == _currentUserId && t.HabitTags.Any(ht => ht.HabitId == habitId))
+            .OrderBy(t => t.Name)
+            .ToList();
+
+        return Ok(HabitDetailsDto.FromEntity(habit, tags));
     }
 
     /// <summary>
