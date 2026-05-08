@@ -9,9 +9,9 @@ namespace HabitTracker.Api.Dtos;
 /// Excludes Type (immutable).
 /// </summary>
 public record PartialUpdateHabitDto(
-    [property: StringLength(200, MinimumLength = 1, ErrorMessage = "Habit name must be between 1 and 200 characters.")]
+    [StringLength(200, MinimumLength = 1, ErrorMessage = "Habit name must be between 1 and 200 characters.")]
     string? Name,
-    [property: StringLength(2000, ErrorMessage = "Description must not exceed 2000 characters.")]
+    [StringLength(2000, ErrorMessage = "Description must not exceed 2000 characters.")]
     string? Description,
     FrequencyPartialUpdateDto? Frequency,
     TargetPartialUpdateDto? Target,
@@ -80,9 +80,9 @@ public record PartialUpdateHabitDto(
 /// Request model for frequency within PartialUpdateHabitDto.
 /// </summary>
 public record FrequencyPartialUpdateDto(
-    [property: RegularExpression(@"^(Daily|Weekly|Monthly|Yearly)$", ErrorMessage = "Frequency type must be 'Daily', 'Weekly', 'Monthly', or 'Yearly'.")]
+    [RegularExpression(@"^(Daily|Weekly|Monthly|Yearly)$", ErrorMessage = "Frequency type must be 'Daily', 'Weekly', 'Monthly', or 'Yearly'.")]
     string? Type,
-    [property: Range(1, 365, ErrorMessage = "Times per period must be between 1 and 365.")]
+    [Range(1, 365, ErrorMessage = "Times per period must be between 1 and 365.")]
     int? TimesPerPeriod);
 
 /// <summary>
@@ -90,7 +90,7 @@ public record FrequencyPartialUpdateDto(
 /// </summary>
 public record TargetPartialUpdateDto(
     int? Value,
-    [property: StringLength(100, ErrorMessage = "Unit must not exceed 100 characters.")]
+    [StringLength(100, ErrorMessage = "Unit must not exceed 100 characters.")]
     string? Unit);
 
 /// <summary>
@@ -98,5 +98,5 @@ public record TargetPartialUpdateDto(
 /// Only Target is updatable; Current is managed by the domain.
 /// </summary>
 public record PartialUpdateMilestoneDto(
-    [property: Range(0, int.MaxValue, ErrorMessage = "Milestone target must be non-negative.")]
+    [Range(0, int.MaxValue, ErrorMessage = "Milestone target must be non-negative.")]
     int? Target);

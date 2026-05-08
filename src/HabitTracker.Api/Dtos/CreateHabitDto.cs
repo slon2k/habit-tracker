@@ -7,15 +7,15 @@ namespace HabitTracker.Api.Dtos;
 /// Request model for creating a new habit.
 /// </summary>
 public record CreateHabitDto(
-    [property: Required(ErrorMessage = "Habit name is required.")]
-    [property: StringLength(200, MinimumLength = 1, ErrorMessage = "Habit name must be between 1 and 200 characters.")]
+    [Required(ErrorMessage = "Habit name is required.")]
+    [StringLength(200, MinimumLength = 1, ErrorMessage = "Habit name must be between 1 and 200 characters.")]
     string Name,
-    [property: StringLength(2000, ErrorMessage = "Description must not exceed 2000 characters.")]
+    [StringLength(2000, ErrorMessage = "Description must not exceed 2000 characters.")]
     string? Description,
-    [property: Required(ErrorMessage = "Habit type is required.")]
-    [property: RegularExpression(@"^(Binary|Measurable)$", ErrorMessage = "Habit type must be 'Binary' or 'Measurable'.")]
+    [Required(ErrorMessage = "Habit type is required.")]
+    [RegularExpression(@"^(Binary|Measurable)$", ErrorMessage = "Habit type must be 'Binary' or 'Measurable'.")]
     string Type,
-    [property: Required(ErrorMessage = "Frequency is required.")]
+    [Required(ErrorMessage = "Frequency is required.")]
     FrequencyCreateDto? Frequency,
     TargetCreateDto? Target,
     DateOnly? EndDate,
@@ -31,7 +31,7 @@ public record CreateHabitDto(
         var frequency = new Frequency
         {
             Type = Enum.Parse<FrequencyType>(Frequency!.Type),
-            TimesPerPeriod = Frequency.TimesPerPeriod
+            TimesPerPeriod = Frequency.TimesPerPeriod ?? 1
         };
 
         var target = Target != null
@@ -55,17 +55,17 @@ public record CreateHabitDto(
 /// Request model for the frequency within CreateHabitDto.
 /// </summary>
 public record FrequencyCreateDto(
-    [property: Required(ErrorMessage = "Frequency type is required.")]
-    [property: RegularExpression(@"^(Daily|Weekly|Monthly|Yearly)$", ErrorMessage = "Frequency type must be 'Daily', 'Weekly', 'Monthly', or 'Yearly'.")]
+    [Required(ErrorMessage = "Frequency type is required.")]
+    [RegularExpression(@"^(Daily|Weekly|Monthly|Yearly)$", ErrorMessage = "Frequency type must be 'Daily', 'Weekly', 'Monthly', or 'Yearly'.")]
     string Type,
-    [property: Required(ErrorMessage = "Times per period is required.")]
-    [property: Range(1, 365, ErrorMessage = "Times per period must be between 1 and 365.")]
-    int TimesPerPeriod);
+    [Required(ErrorMessage = "Times per period is required.")]
+    [Range(1, 365, ErrorMessage = "Times per period must be between 1 and 365.")]
+    int? TimesPerPeriod);
 
 /// <summary>
 /// Request model for the target within CreateHabitDto.
 /// </summary>
 public record TargetCreateDto(
     int? Value,
-    [property: StringLength(100, ErrorMessage = "Unit must not exceed 100 characters.")]
+    [StringLength(100, ErrorMessage = "Unit must not exceed 100 characters.")]
     string? Unit);
