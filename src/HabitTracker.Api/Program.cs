@@ -1,5 +1,6 @@
 using HabitTracker.Api.Data;
 using HabitTracker.Api.Extensions;
+using HabitTracker.Api.Middleware;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -47,6 +48,8 @@ builder.Logging.AddOpenTelemetry(options =>
 });
 
 var app = builder.Build();
+
+app.UseExceptionHandling();
 
 if (app.Environment.IsDevelopment())
 {
