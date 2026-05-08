@@ -7,48 +7,20 @@ namespace HabitTracker.Api.Dtos;
 /// Request model for replacing an entire habit (PUT).
 /// All fields must be provided for full replacement semantics.
 /// </summary>
-public class UpdateHabitDto
+public record UpdateHabitDto(
+    [property: Required(ErrorMessage = "Habit name is required.")]
+    [property: StringLength(200, MinimumLength = 1, ErrorMessage = "Habit name must be between 1 and 200 characters.")]
+    string Name,
+    [property: StringLength(2000, ErrorMessage = "Description must not exceed 2000 characters.")]
+    string? Description,
+    [property: Required(ErrorMessage = "Frequency is required.")]
+    FrequencyUpdateDto? Frequency,
+    [property: Required(ErrorMessage = "Target is required.")]
+    TargetUpdateDto? Target,
+    DateOnly? EndDate,
+    TimeOnly? ReminderTime,
+    UpdateMilestoneDto? Milestone = null)
 {
-    /// <summary>
-    /// The habit name. Required.
-    /// </summary>
-    [Required(ErrorMessage = "Habit name is required.")]
-    [StringLength(200, MinimumLength = 1, ErrorMessage = "Habit name must be between 1 and 200 characters.")]
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The description. Optional.
-    /// </summary>
-    [StringLength(2000, ErrorMessage = "Description must not exceed 2000 characters.")]
-    public string? Description { get; set; }
-
-    /// <summary>
-    /// The frequency. Required.
-    /// </summary>
-    [Required(ErrorMessage = "Frequency is required.")]
-    public FrequencyUpdateDto? Frequency { get; set; }
-
-    /// <summary>
-    /// The target. Required.
-    /// </summary>
-    [Required(ErrorMessage = "Target is required.")]
-    public TargetUpdateDto? Target { get; set; }
-
-    /// <summary>
-    /// The end date. Optional.
-    /// </summary>
-    public DateOnly? EndDate { get; set; }
-
-    /// <summary>
-    /// The reminder time. Optional.
-    /// </summary>
-    public TimeOnly? ReminderTime { get; set; }
-
-    /// <summary>
-    /// Optional milestone target update. If provided, only Target is used.
-    /// </summary>
-    public UpdateMilestoneDto? Milestone { get; set; }
-
     /// <summary>
     /// Applies all fields from this DTO to an existing habit (full replacement).
     /// </summary>
@@ -93,50 +65,27 @@ public class UpdateHabitDto
 /// <summary>
 /// Request model for frequency within UpdateHabitDto.
 /// </summary>
-public class FrequencyUpdateDto
-{
-    /// <summary>
-    /// The frequency type: "Daily", "Weekly", "Monthly", or "Yearly". Required.
-    /// </summary>
-    [Required(ErrorMessage = "Frequency type is required.")]
-    [RegularExpression(@"^(Daily|Weekly|Monthly|Yearly)$", ErrorMessage = "Frequency type must be 'Daily', 'Weekly', 'Monthly', or 'Yearly'.")]
-    public string Type { get; set; } = string.Empty;
-
-    /// <summary>
-    /// How many times per period (must be positive, reasonable max of 365). Required.
-    /// </summary>
-    [Required(ErrorMessage = "Times per period is required.")]
-    [Range(1, 365, ErrorMessage = "Times per period must be between 1 and 365.")]
-    public int TimesPerPeriod { get; set; }
-}
+public record FrequencyUpdateDto(
+    [property: Required(ErrorMessage = "Frequency type is required.")]
+    [property: RegularExpression(@"^(Daily|Weekly|Monthly|Yearly)$", ErrorMessage = "Frequency type must be 'Daily', 'Weekly', 'Monthly', or 'Yearly'.")]
+    string Type,
+    [property: Required(ErrorMessage = "Times per period is required.")]
+    [property: Range(1, 365, ErrorMessage = "Times per period must be between 1 and 365.")]
+    int TimesPerPeriod);
 
 /// <summary>
 /// Request model for target within UpdateHabitDto.
 /// </summary>
-public class TargetUpdateDto
-{
-    /// <summary>
-    /// The numerical target value.
-    /// </summary>
-    public int? Value { get; set; }
-
-    /// <summary>
-    /// The unit of measurement.
-    /// </summary>
-    [StringLength(100, ErrorMessage = "Unit must not exceed 100 characters.")]
-    public string? Unit { get; set; }
-}
+public record TargetUpdateDto(
+    int? Value,
+    [property: StringLength(100, ErrorMessage = "Unit must not exceed 100 characters.")]
+    string? Unit);
 
 /// <summary>
 /// Request model for milestone within UpdateHabitDto.
 /// Only Target is updatable; Current is managed by the domain.
 /// </summary>
-public class UpdateMilestoneDto
-{
-    /// <summary>
-    /// The target milestone value. Required if Milestone is provided.
-    /// </summary>
-    [Required(ErrorMessage = "Milestone target is required.")]
-    [Range(0, int.MaxValue, ErrorMessage = "Milestone target must be non-negative.")]
-    public int Target { get; set; }
-}
+public record UpdateMilestoneDto(
+    [property: Required(ErrorMessage = "Milestone target is required.")]
+    [property: Range(0, int.MaxValue, ErrorMessage = "Milestone target must be non-negative.")]
+    int Target);
