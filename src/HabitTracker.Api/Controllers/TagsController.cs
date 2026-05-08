@@ -64,14 +64,9 @@ public class TagsController : ControllerBase
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (string.IsNullOrWhiteSpace(request.Name))
+        if (!ModelState.IsValid)
         {
-            return BadRequest(new { error = "Tag name is required." });
-        }
-
-        if (request.Name.Length > 50)
-        {
-            return BadRequest(new { error = "Tag name must be 50 characters or less." });
+            return ValidationProblem(ModelState);
         }
 
         // Check for duplicate tag name (unique per user)
@@ -104,14 +99,9 @@ public class TagsController : ControllerBase
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (string.IsNullOrWhiteSpace(request.Name))
+        if (!ModelState.IsValid)
         {
-            return BadRequest(new { error = "Tag name is required." });
-        }
-
-        if (request.Name.Length > 50)
-        {
-            return BadRequest(new { error = "Tag name must be 50 characters or less." });
+            return ValidationProblem(ModelState);
         }
 
         var tag = _dbContext.Tags.FirstOrDefault(t => t.Id == tagId && t.UserId == _currentUserId);
