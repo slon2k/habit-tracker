@@ -65,7 +65,7 @@ public class HabitsController : ControllerBase
 
         if (!ModelState.IsValid)
         {
-            return BadRequest(ModelState);
+            return ValidationProblem(ModelState);
         }
 
         var habit = request.ToHabit(_currentUserId);
@@ -89,7 +89,7 @@ public class HabitsController : ControllerBase
 
         if (!ModelState.IsValid)
         {
-            return BadRequest(ModelState);
+            return ValidationProblem(ModelState);
         }
 
         var habit = _dbContext.Habits.FirstOrDefault(h => h.Id == habitId && h.UserId == _currentUserId);
@@ -118,7 +118,7 @@ public class HabitsController : ControllerBase
 
         if (!ModelState.IsValid)
         {
-            return BadRequest(ModelState);
+            return ValidationProblem(ModelState);
         }
 
         var habit = _dbContext.Habits.FirstOrDefault(h => h.Id == habitId && h.UserId == _currentUserId);
