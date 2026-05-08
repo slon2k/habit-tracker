@@ -154,4 +154,97 @@ public class HabitsController : ControllerBase
 
         return NoContent();
     }
+
+    /// <summary>
+    /// Upsert tags to a habit. Replaces all existing tags with the provided list.
+    /// </summary>
+    /// <param name="habitId">The habit ID.</param>
+    /// <param name="request">Request containing list of tag IDs to associate with the habit.</param>
+    /// <returns>200 OK with the list of tags now associated with the habit, or 404 if habit not found.</returns>
+    [HttpPut("{habitId:guid}/tags")]
+    public IActionResult UpsertHabitTags(Guid habitId, [FromBody] UpsertHabitTagsRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var habit = _dbContext.Habits.FirstOrDefault(h => h.Id == habitId && h.UserId == _currentUserId);
+        if (habit == null)
+        {
+            return NotFound();
+        }
+
+        if (request.TagIds == null || request.TagIds.Count == 0)
+        {
+            // Clear all tags if empty list provided
+            var existingJoins = _dbContext.HabitTags.Where(ht => ht.HabitId == habitId).ToList();
+            _dbContext.HabitTags.RemoveRange(existingJoins);
+            _dbContext.SaveChanges();
+            return Ok(new List<TagDto>());
+        }
+
+        // Verify all provided tag IDs belong to current user
+        var tagIds = request.TagIds.Distinct().ToList();
+        var userTags = _dbContext.Tags
+            .Where(t => t.UserId == _currentUserId && tagIds.Contains(t.Id))
+            .ToList();
+
+        if (userTags.Count != tagIds.Count)
+        {
+            return BadRequest(new { error = "One or more tag IDs do not exist or do not belong to the current user." });
+        }
+
+        // Remove existing joins for this habit
+        var existingJoins2 = _dbContext.HabitTags.Where(ht => ht.HabitId == habitId).ToList();
+        _dbContext.HabitTags.RemoveRange(existingJoins2);
+
+        // Add new joins
+        foreach (var tagId in tagIds)
+        {
+            var habitTag = new HabitTag(habitId, tagId);
+            _dbContext.HabitTags.Add(habitTag);
+        }
+
+        _dbContext.SaveChanges();
+
+        // Return the updated list of tags
+        var tagsForHabit = _dbContext.Tags
+            .Where(t => tagIds.Contains(t.Id))
+            .Select(TagDto.FromEntity)
+            .ToList();
+
+        return Ok(tagsForHabit);
+    }
+
+    /// <summary>
+    /// Remove a single tag from a habit.
+    /// </summary>
+    /// <param name="habitId">The habit ID.</param>
+    /// <param name="tagId">The tag ID to remove.</param>
+    /// <returns>204 No Content on success, or 404 if habit or relationship not found or not owned by the user.</returns>
+    [HttpDelete("{habitId:guid}/tags/{tagId:guid}")]
+    public IActionResult RemoveTagFromHabit(Guid habitId, Guid tagId)
+    {
+        var habit = _dbContext.Habits.FirstOrDefault(h => h.Id == habitId && h.UserId == _currentUserId);
+        if (habit == null)
+        {
+            return NotFound();
+        }
+
+        var habitTag = _dbContext.HabitTags.FirstOrDefault(ht => ht.HabitId == habitId && ht.TagId == tagId);
+        if (habitTag == null)
+        {
+            return NotFound();
+        }
+
+        // Verify the tag belongs to the current user (security check)
+        var tag = _dbContext.Tags.FirstOrDefault(t => t.Id == tagId && t.UserId == _currentUserId);
+        if (tag == null)
+        {
+            return NotFound();
+        }
+
+        _dbContext.HabitTags.Remove(habitTag);
+        _dbContext.SaveChanges();
+
+        return NoContent();
+    }
 }

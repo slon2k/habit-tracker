@@ -46,6 +46,9 @@ public sealed class Habit
 
     public DateTime? LastCompletedAtUtc { get; private set; }
 
+    // Navigation property for many-to-many relationship
+    public ICollection<HabitTag> HabitTags { get; private set; } = new List<HabitTag>();
+
     // Constructors
 
     private Habit() 

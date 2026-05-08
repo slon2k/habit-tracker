@@ -1,0 +1,158 @@
+using HabitTracker.Api.Data;
+using HabitTracker.Api.Dtos;
+using HabitTracker.Api.Entities;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace HabitTracker.Api.Controllers;
+
+[ApiController]
+[Route("api/tags")]
+public class TagsController : ControllerBase
+{
+    private readonly ApplicationDbContext _dbContext;
+
+    /// <summary>
+    /// Placeholder for authenticated user's ID.
+    /// Implementation note: Extract from JWT claims/identity when authentication is implemented.
+    /// </summary>
+#pragma warning disable S1135 // Suppress SonarAnalyzer TODO rule
+    private readonly Guid _currentUserId = Guid.Parse("550e8400-e29b-41d4-a716-446655440001");
+#pragma warning restore S1135
+
+    public TagsController(ApplicationDbContext dbContext)
+    {
+        ArgumentNullException.ThrowIfNull(dbContext);
+        _dbContext = dbContext;
+    }
+
+    /// <summary>
+    /// Get all tags for the current user.
+    /// </summary>
+    /// <returns>List of tags as DTOs, ordered by creation date.</returns>
+    [HttpGet]
+    public IActionResult GetTags()
+    {
+        var tags = _dbContext.Tags
+            .Where(t => t.UserId == _currentUserId)
+            .OrderByDescending(t => t.CreatedAtUtc)
+            .ToList();
+
+        var dtos = tags.Select(TagDto.FromEntity).ToList();
+        return Ok(dtos);
+    }
+
+    /// <summary>
+    /// Get a single tag by ID.
+    /// </summary>
+    /// <param name="tagId">The tag ID.</param>
+    /// <returns>The tag as a DTO, or 404 if not found or not owned by the user.</returns>
+    [HttpGet("{tagId:guid}")]
+    public IActionResult GetTag(Guid tagId)
+    {
+        var tag = _dbContext.Tags.FirstOrDefault(t => t.Id == tagId && t.UserId == _currentUserId);
+        return tag == null ? NotFound() : Ok(TagDto.FromEntity(tag));
+    }
+
+    /// <summary>
+    /// Create a new tag for the current user.
+    /// </summary>
+    /// <param name="request">The tag creation request.</param>
+    /// <returns>The created tag as a DTO with 201 Created status.</returns>
+    [HttpPost]
+    public IActionResult CreateTag([FromBody] CreateTagDto request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            return BadRequest(new { error = "Tag name is required." });
+        }
+
+        if (request.Name.Length > 50)
+        {
+            return BadRequest(new { error = "Tag name must be 50 characters or less." });
+        }
+
+        // Check for duplicate tag name (unique per user)
+        var existingTag = _dbContext.Tags
+            .FirstOrDefault(t => t.UserId == _currentUserId && t.Name == request.Name);
+
+        if (existingTag != null)
+        {
+            return Conflict(new { error = "A tag with this name already exists." });
+        }
+
+        var tagId = Guid.NewGuid();
+        var tag = new Tag(tagId, _currentUserId, request.Name);
+
+        _dbContext.Tags.Add(tag);
+        _dbContext.SaveChanges();
+
+        var dto = TagDto.FromEntity(tag);
+        return CreatedAtAction(nameof(GetTag), new { tagId = tag.Id }, dto);
+    }
+
+    /// <summary>
+    /// Update a tag's name.
+    /// </summary>
+    /// <param name="tagId">The tag ID.</param>
+    /// <param name="request">The update request containing the new name.</param>
+    /// <returns>The updated tag as a DTO, or 404 if not found or not owned by the user.</returns>
+    [HttpPut("{tagId:guid}")]
+    public IActionResult UpdateTag(Guid tagId, [FromBody] CreateTagDto request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            return BadRequest(new { error = "Tag name is required." });
+        }
+
+        if (request.Name.Length > 50)
+        {
+            return BadRequest(new { error = "Tag name must be 50 characters or less." });
+        }
+
+        var tag = _dbContext.Tags.FirstOrDefault(t => t.Id == tagId && t.UserId == _currentUserId);
+        if (tag == null)
+        {
+            return NotFound();
+        }
+
+        // Check for duplicate tag name (unique per user, but allow same name if updating the same tag)
+        var conflictingTag = _dbContext.Tags
+            .FirstOrDefault(t => t.UserId == _currentUserId && t.Name == request.Name && t.Id != tagId);
+
+        if (conflictingTag != null)
+        {
+            return Conflict(new { error = "A tag with this name already exists." });
+        }
+
+        tag.UpdateName(request.Name);
+        _dbContext.SaveChanges();
+
+        var dto = TagDto.FromEntity(tag);
+        return Ok(dto);
+    }
+
+    /// <summary>
+    /// Delete a tag by ID. This also removes all associated HabitTag relationships via cascade delete.
+    /// </summary>
+    /// <param name="tagId">The tag ID.</param>
+    /// <returns>204 No Content on success, or 404 if not found or not owned by the user.</returns>
+    [HttpDelete("{tagId:guid}")]
+    public IActionResult DeleteTag(Guid tagId)
+    {
+        var tag = _dbContext.Tags.FirstOrDefault(t => t.Id == tagId && t.UserId == _currentUserId);
+        if (tag == null)
+        {
+            return NotFound();
+        }
+
+        _dbContext.Tags.Remove(tag);
+        _dbContext.SaveChanges();
+
+        return NoContent();
+    }
+}
