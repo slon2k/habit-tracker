@@ -29,7 +29,7 @@ public class HabitsController : ControllerBase
     /// <summary>
     /// Get all habits for the current user.
     /// </summary>
-    /// <returns>Paginated list of habits as DTOs with pagination metadata.</returns>
+    /// <returns>Paginated list of habits as DTOs with pagination metadata and HATEOAS links.</returns>
     [HttpGet]
     public async Task<IActionResult> GetHabits([FromQuery] HabitsQueryParameters? queryParameters, CancellationToken cancellationToken)
     {
@@ -41,14 +41,17 @@ public class HabitsController : ControllerBase
             .ApplySorting(parameters.Sort)
             .ToPagedResultAsync(parameters.PageNumber, parameters.PageSize, HabitDto.FromEntity, cancellationToken);
 
-        return Ok(result);
+        var links = BuildPaginationLinks(parameters, result.PageNumber, result.PageSize, result.TotalCount);
+        var resultWithLinks = new PagedResultWithLinks<HabitDto>(result.Items, result.TotalCount, result.PageNumber, result.PageSize, links);
+
+        return Ok(resultWithLinks);
     }
 
     /// <summary>
     /// Get a single habit by ID, including its associated tags.
     /// </summary>
     /// <param name="habitId">The habit ID.</param>
-    /// <returns>The habit details as a DTO (including tags), or 404 if not found or not owned by the user.</returns>
+    /// <returns>The habit details as a DTO (including tags) with HATEOAS links, or 404 if not found or not owned by the user.</returns>
     [HttpGet("{habitId:guid}")]
     public IActionResult GetHabit(Guid habitId)
     {
@@ -63,14 +66,18 @@ public class HabitsController : ControllerBase
             .OrderBy(t => t.Name)
             .ToList();
 
-        return Ok(HabitDetailsDto.FromEntity(habit, tags));
+        var habitDetails = HabitDetailsDto.FromEntity(habit, tags);
+        var links = BuildDetailLinks(habitId, habit.IsArchived);
+        var response = new HabitWithLinks(habitDetails, links);
+
+        return Ok(response);
     }
 
     /// <summary>
     /// Create a new habit for the current user.
     /// </summary>
     /// <param name="request">The habit creation request.</param>
-    /// <returns>The created habit as a DTO with 201 Created status.</returns>
+    /// <returns>The created habit as a DTO with 201 Created status and HATEOAS links.</returns>
     [HttpPost]
     public IActionResult CreateHabit([FromBody] CreateHabitDto request)
     {
@@ -86,7 +93,11 @@ public class HabitsController : ControllerBase
         _dbContext.Habits.Add(habit);
         _dbContext.SaveChanges();
 
-        return CreatedAtAction(nameof(GetHabit), new { habitId = habit.Id }, HabitDto.FromEntity(habit));
+        var habitDto = HabitDto.FromEntity(habit);
+        var links = BuildCreatedLinks(habit.Id);
+        var response = new HabitCreatedWithLinks(habitDto, links);
+
+        return CreatedAtAction(nameof(GetHabit), new { habitId = habit.Id }, response);
     }
 
     /// <summary>
@@ -259,5 +270,162 @@ public class HabitsController : ControllerBase
         _dbContext.SaveChanges();
 
         return NoContent();
+    }
+
+    private List<HateoasLink> BuildPaginationLinks(HabitsQueryParameters parameters, int pageNumber, int pageSize, int totalCount)
+    {
+        ArgumentNullException.ThrowIfNull(parameters);
+
+        var links = new List<HateoasLink>();
+        var totalPages = (totalCount + pageSize - 1) / pageSize;
+
+        links.Add(new HateoasLink(
+            Href: CreateRouteLink(nameof(GetHabits), BuildHabitsRouteValues(parameters, pageNumber, pageSize)),
+            Rel: "self",
+            Method: "GET"));
+
+        links.Add(new HateoasLink(
+            Href: CreateRouteLink(nameof(GetHabits), BuildHabitsRouteValues(parameters, 1, pageSize)),
+            Rel: "first",
+            Method: "GET"));
+
+        if (totalPages > 0)
+        {
+            links.Add(new HateoasLink(
+                Href: CreateRouteLink(nameof(GetHabits), BuildHabitsRouteValues(parameters, totalPages, pageSize)),
+                Rel: "last",
+                Method: "GET"));
+        }
+
+        if (pageNumber > 1)
+        {
+            links.Add(new HateoasLink(
+                Href: CreateRouteLink(nameof(GetHabits), BuildHabitsRouteValues(parameters, pageNumber - 1, pageSize)),
+                Rel: "prev",
+                Method: "GET"));
+        }
+
+        if (pageNumber < totalPages)
+        {
+            links.Add(new HateoasLink(
+                Href: CreateRouteLink(nameof(GetHabits), BuildHabitsRouteValues(parameters, pageNumber + 1, pageSize)),
+                Rel: "next",
+                Method: "GET"));
+        }
+
+        links.Add(new HateoasLink(
+            Href: CreateRouteLink(nameof(GetHabits), null),
+            Rel: "create",
+            Method: "POST",
+            Title: "Create a new habit"));
+
+        return links;
+    }
+
+    private static Dictionary<string, object?> BuildHabitsRouteValues(HabitsQueryParameters parameters, int pageNumber, int pageSize)
+    {
+        var routeValues = new Dictionary<string, object?>
+        {
+            ["pageNumber"] = pageNumber,
+            ["pageSize"] = pageSize
+        };
+
+        if (!string.IsNullOrWhiteSpace(parameters.Search))
+        {
+            routeValues["search"] = parameters.Search;
+        }
+
+        if (parameters.Type.HasValue)
+        {
+            routeValues["type"] = parameters.Type.Value;
+        }
+
+        if (parameters.Status.HasValue)
+        {
+            routeValues["status"] = parameters.Status.Value;
+        }
+
+        if (!string.IsNullOrWhiteSpace(parameters.Sort))
+        {
+            routeValues["sort"] = parameters.Sort;
+        }
+
+        return routeValues;
+    }
+
+    private List<HateoasLink> BuildDetailLinks(Guid habitId, bool isArchived)
+    {
+        var links = new List<HateoasLink>();
+
+        links.Add(new HateoasLink(
+            Href: CreateRouteLink(nameof(GetHabit), new { habitId }),
+            Rel: "self",
+            Method: "GET"));
+
+        links.Add(new HateoasLink(
+            Href: CreateRouteLink(nameof(UpdateHabit), new { habitId }),
+            Rel: "update",
+            Method: "PUT",
+            Title: "Replace this habit"));
+
+        links.Add(new HateoasLink(
+            Href: CreateRouteLink(nameof(PatchHabit), new { habitId }),
+            Rel: "patch",
+            Method: "PATCH",
+            Title: "Partially update this habit"));
+
+        if (!isArchived)
+        {
+            links.Add(new HateoasLink(
+                Href: CreateRouteLink(nameof(DeleteHabit), new { habitId }),
+                Rel: "delete",
+                Method: "DELETE",
+                Title: "Archive this habit"));
+        }
+
+        links.Add(new HateoasLink(
+            Href: CreateRouteLink(nameof(UpsertHabitTags), new { habitId }),
+            Rel: "tags",
+            Method: "PUT",
+            Title: "Replace tags for this habit"));
+
+        links.Add(new HateoasLink(
+            Href: CreateRouteLink(nameof(GetHabits), null),
+            Rel: "all",
+            Method: "GET",
+            Title: "List all habits"));
+
+        return links;
+    }
+
+    private List<HateoasLink> BuildCreatedLinks(Guid habitId)
+    {
+        var links = new List<HateoasLink>();
+
+        links.Add(new HateoasLink(
+            Href: CreateRouteLink(nameof(GetHabit), new { habitId }),
+            Rel: "self",
+            Method: "GET",
+            Title: "The created habit"));
+
+        links.Add(new HateoasLink(
+            Href: CreateRouteLink(nameof(UpdateHabit), new { habitId }),
+            Rel: "update",
+            Method: "PUT",
+            Title: "Replace this habit"));
+
+        links.Add(new HateoasLink(
+            Href: CreateRouteLink(nameof(GetHabits), null),
+            Rel: "all",
+            Method: "GET",
+            Title: "List all habits"));
+
+        return links;
+    }
+
+    private string CreateRouteLink(string actionName, object? routeValues)
+    {
+        var link = Url.Action(actionName, values: routeValues);
+        return link ?? throw new InvalidOperationException($"Unable to generate route link for action '{actionName}'.");
     }
 }

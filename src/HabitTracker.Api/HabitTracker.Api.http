@@ -11,6 +11,14 @@ Accept: application/json
 GET {{HabitTracker.Api_HostAddress}}/api/habits
 Accept: application/json
 
+### Get All Habits - With Pagination (Page 1, 5 items per page)
+GET {{HabitTracker.Api_HostAddress}}/api/habits?pageNumber=1&pageSize=5
+Accept: application/json
+
+### Get All Habits - Paginated with Sort (includes HATEOAS links: self, first, last, next, prev, create)
+GET {{HabitTracker.Api_HostAddress}}/api/habits?sort=name:asc&pageNumber=1&pageSize=10
+Accept: application/json
+
 ### Get Habits - Search
 GET {{HabitTracker.Api_HostAddress}}/api/habits?search=Run
 Accept: application/json
@@ -73,7 +81,7 @@ Content-Type: application/json
   "reminderTime": "20:00:00"
 }
 
-### Get Single Habit (replace {habitId} with actual ID)
+### Get Single Habit (with HATEOAS links: self, update, patch, delete, tags, all)
 GET {{HabitTracker.Api_HostAddress}}/api/habits/{{habitId}}
 Accept: application/json
 
