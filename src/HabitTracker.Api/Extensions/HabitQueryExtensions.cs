@@ -138,4 +138,19 @@ public static class HabitQueryExtensions
 
         return query;
     }
+
+    public static IQueryable<Habit> ApplyPagination(this IQueryable<Habit> query, HabitsQueryParameters queryParameters)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(queryParameters);
+
+        if (queryParameters.PageNumber < 1 || queryParameters.PageSize < 1)
+        {
+            throw new ArgumentException("PageNumber and PageSize must be greater than 0.");
+        }
+
+        return query
+            .Skip((queryParameters.PageNumber - 1) * queryParameters.PageSize)
+            .Take(queryParameters.PageSize);
+    }
 }

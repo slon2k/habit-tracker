@@ -29,20 +29,30 @@ public class HabitsController : ControllerBase
     /// <summary>
     /// Get all habits for the current user.
     /// </summary>
-    /// <returns>List of habits as DTOs.</returns>
+    /// <returns>Paginated list of habits as DTOs with pagination metadata.</returns>
     [HttpGet]
     public IActionResult GetHabits([FromQuery] HabitsQueryParameters queryParameters)
     {
-        var habitsQuery = _dbContext.Habits
+        var filteredQuery = _dbContext.Habits
             .Where(h => h.UserId == _currentUserId)
             .ApplyFiltering(queryParameters)
             .ApplySorting(queryParameters?.Sort);
 
-        var habits = habitsQuery
+        var totalCount = filteredQuery.Count();
+
+        var habits = filteredQuery
+            .ApplyPagination(queryParameters ?? new HabitsQueryParameters())
             .ToList();
 
         var dtos = habits.Select(HabitDto.FromEntity).ToList();
-        return Ok(dtos);
+
+        var pagedResult = new PagedResult<HabitDto>(
+            dtos,
+            totalCount,
+            queryParameters?.PageNumber ?? 1,
+            queryParameters?.PageSize ?? 10);
+
+        return Ok(pagedResult);
     }
 
     /// <summary>
