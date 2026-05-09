@@ -1,10 +1,23 @@
 using HabitTracker.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace HabitTracker.Api.Extensions;
 
 public static class DatabaseExtensions
 {
+    public static WebApplicationBuilder AddDatabase(this WebApplicationBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseNpgsql(
+                builder.Configuration.GetConnectionString("Database"),
+                npgOptions => npgOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application)));
+
+        return builder;
+    }
+
     private static readonly Action<ILogger, Exception?> LogMigrationFailed =
         LoggerMessage.Define(
             LogLevel.Error,
