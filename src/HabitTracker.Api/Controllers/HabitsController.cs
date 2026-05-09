@@ -1,6 +1,7 @@
 using HabitTracker.Api.Data;
 using HabitTracker.Api.Dtos;
 using HabitTracker.Api.Entities;
+using HabitTracker.Api.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HabitTracker.Api.Controllers;
@@ -29,29 +30,15 @@ public class HabitsController : ControllerBase
     /// Get all habits for the current user.
     /// </summary>
     /// <returns>List of habits as DTOs.</returns>
-        [HttpGet]
+    [HttpGet]
     public IActionResult GetHabits([FromQuery] HabitsQueryParameters queryParameters)
     {
         var habitsQuery = _dbContext.Habits
-            .Where(h => h.UserId == _currentUserId);
-
-        if (!string.IsNullOrWhiteSpace(queryParameters?.Search))
-        {
-            habitsQuery = habitsQuery.Where(h => h.Name.Contains(queryParameters.Search) || h.Description != null && h.Description.Contains(queryParameters.Search));
-        }
-
-        if (queryParameters?.Type.HasValue == true)
-        {
-            habitsQuery = habitsQuery.Where(h => h.Type == queryParameters.Type.Value);
-        }
-
-        if (queryParameters?.Status.HasValue == true)
-        {
-            habitsQuery = habitsQuery.Where(h => h.Status == queryParameters.Status.Value);
-        }
+            .Where(h => h.UserId == _currentUserId)
+            .ApplyFiltering(queryParameters)
+            .ApplySorting(queryParameters?.Sort);
 
         var habits = habitsQuery
-            .OrderByDescending(h => h.CreatedAtUtc)
             .ToList();
 
         var dtos = habits.Select(HabitDto.FromEntity).ToList();

@@ -27,6 +27,18 @@ Accept: application/json
 GET {{HabitTracker.Api_HostAddress}}/api/habits?search=Read&type=Measurable&status=Ongoing
 Accept: application/json
 
+### Get Habits - Sort by Status then Created Date
+GET {{HabitTracker.Api_HostAddress}}/api/habits?sort=status:asc,createdAtUtc:desc
+Accept: application/json
+
+### Get Habits - Sort by Name
+GET {{HabitTracker.Api_HostAddress}}/api/habits?sort=name:asc
+Accept: application/json
+
+### Get Habits - Combined Filters and Sort
+GET {{HabitTracker.Api_HostAddress}}/api/habits?status=Ongoing&sort=type:asc,name:asc,createdAtUtc:desc
+Accept: application/json
+
 ### Create a New Habit (Binary - Daily Exercise)
 POST {{HabitTracker.Api_HostAddress}}/api/habits
 Content-Type: application/json
