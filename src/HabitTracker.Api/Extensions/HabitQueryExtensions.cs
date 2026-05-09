@@ -153,4 +153,5 @@ public static class HabitQueryExtensions
             .Skip((queryParameters.PageNumber - 1) * queryParameters.PageSize)
             .Take(queryParameters.PageSize);
     }
+
 }

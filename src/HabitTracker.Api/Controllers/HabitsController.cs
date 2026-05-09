@@ -31,28 +31,17 @@ public class HabitsController : ControllerBase
     /// </summary>
     /// <returns>Paginated list of habits as DTOs with pagination metadata.</returns>
     [HttpGet]
-    public IActionResult GetHabits([FromQuery] HabitsQueryParameters queryParameters)
+    public async Task<IActionResult> GetHabits([FromQuery] HabitsQueryParameters? queryParameters, CancellationToken cancellationToken)
     {
-        var filteredQuery = _dbContext.Habits
+        var parameters = queryParameters ?? new HabitsQueryParameters();
+
+        var result = await _dbContext.Habits
             .Where(h => h.UserId == _currentUserId)
-            .ApplyFiltering(queryParameters)
-            .ApplySorting(queryParameters?.Sort);
+            .ApplyFiltering(parameters)
+            .ApplySorting(parameters.Sort)
+            .ToPagedResultAsync(parameters.PageNumber, parameters.PageSize, HabitDto.FromEntity, cancellationToken);
 
-        var totalCount = filteredQuery.Count();
-
-        var habits = filteredQuery
-            .ApplyPagination(queryParameters ?? new HabitsQueryParameters())
-            .ToList();
-
-        var dtos = habits.Select(HabitDto.FromEntity).ToList();
-
-        var pagedResult = new PagedResult<HabitDto>(
-            dtos,
-            totalCount,
-            queryParameters?.PageNumber ?? 1,
-            queryParameters?.PageSize ?? 10);
-
-        return Ok(pagedResult);
+        return Ok(result);
     }
 
     /// <summary>
