@@ -23,6 +23,11 @@ public class HabitConfiguration : IEntityTypeConfiguration<Habit>
         builder.Property(h => h.UserId)
             .IsRequired();
 
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(h => h.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Habit metadata
         builder.Property(h => h.Name)
             .IsRequired()

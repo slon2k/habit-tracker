@@ -3,6 +3,7 @@ using System;
 using HabitTracker.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HabitTracker.Api.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260510135145_AddUsers")]
+    partial class AddUsers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -90,8 +93,6 @@ namespace HabitTracker.Api.Data.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("habits", "habittracker");
                 });
@@ -178,12 +179,6 @@ namespace HabitTracker.Api.Data.Migrations
 
             modelBuilder.Entity("HabitTracker.Api.Entities.Habit", b =>
                 {
-                    b.HasOne("HabitTracker.Api.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.OwnsOne("HabitTracker.Api.Entities.Frequency", "Frequency", b1 =>
                         {
                             b1.Property<Guid>("HabitId")
@@ -275,15 +270,6 @@ namespace HabitTracker.Api.Data.Migrations
                     b.Navigation("Habit");
 
                     b.Navigation("Tag");
-                });
-
-            modelBuilder.Entity("HabitTracker.Api.Entities.Tag", b =>
-                {
-                    b.HasOne("HabitTracker.Api.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("HabitTracker.Api.Entities.Habit", b =>

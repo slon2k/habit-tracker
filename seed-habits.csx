@@ -9,6 +9,7 @@
 #r "nuget: Microsoft.Extensions.Configuration.Json, 8.0.0"
 
 #load "src/HabitTracker.Api/Entities/Habit.cs"
+#load "src/HabitTracker.Api/Entities/User.cs"
 #load "src/HabitTracker.Api/Data/ApplicationDbContext.cs"
 #load "src/HabitTracker.Api/Data/Schemas.cs"
 
@@ -16,8 +17,11 @@ using Microsoft.EntityFrameworkCore;
 using HabitTracker.Api.Entities;
 using HabitTracker.Api.Data;
 
-// Sample user ID (placeholder until User entity is implemented)
+// Sample user used by development seeding
 var sampleUserId = Guid.Parse("550e8400-e29b-41d4-a716-446655440001");
+var sampleIdentityId = "dev-seed-identity-user-0001";
+var sampleUserName = "Sample User";
+var sampleUserEmail = "sample.user@habittracker.local";
 
 // Create sample habits
 var habits = new[]
@@ -140,11 +144,20 @@ try
     // Create DbContext with connection string from environment or appsettings
     var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
     var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") 
-        ?? "Host=localhost;Port=5432;Database=habittracker;Username=postgres;Password=postgres";
+        ?? "Host=localhost;Port=5432;Database=habittracker;Username=ht;Password=habittracker";
     
     optionsBuilder.UseNpgsql(connectionString);
     
     using var context = new ApplicationDbContext(optionsBuilder.Options);
+
+    // Ensure sample user exists before seeding habits (FK habits.UserId -> users.Id)
+    var userExists = context.Users.Any(u => u.Id == sampleUserId);
+    if (!userExists)
+    {
+        context.Users.Add(new User(sampleUserId, sampleIdentityId, sampleUserName, sampleUserEmail));
+        context.SaveChanges();
+        Console.WriteLine($"👤 Created sample user: {sampleUserName} ({sampleUserId})");
+    }
     
     // Check if habits already exist
     var existingCount = context.Habits.Count(h => h.UserId == sampleUserId);

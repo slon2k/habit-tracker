@@ -23,6 +23,11 @@ public class TagConfiguration : IEntityTypeConfiguration<Tag>
         builder.Property(t => t.UserId)
             .IsRequired();
 
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(t => t.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Tag name: required, max 50 characters
         builder.Property(t => t.Name)
             .IsRequired()

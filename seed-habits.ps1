@@ -49,7 +49,7 @@ var seedMethod = seedDataType.GetMethod("SeedSampleHabitsAsync",
 
 // Create DbContext
 var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") 
-    ?? "Host=localhost;Port=5432;Database=habittracker;Username=postgres;Password=postgres";
+    ?? "Host=localhost;Port=5432;Database=habittracker;Username=ht;Password=habittracker";
 
 var optionsBuilder = new DbContextOptionsBuilder();
 var useNpgsqlMethod = optionsBuilder.GetType().GetMethod("UseNpgsql",

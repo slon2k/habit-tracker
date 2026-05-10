@@ -34,6 +34,18 @@ The API picks up `appsettings.Development.json` automatically (`ASPNETCORE_ENVIR
 
 ## Database
 
+### Reset Dev Database (drop + migrate + seed)
+
+```powershell
+.\reset-dev-db.ps1
+```
+
+Optional (skip seeding):
+
+```powershell
+.\reset-dev-db.ps1 -SkipSeed
+```
+
 ### Apply Migrations
 
 ```powershell

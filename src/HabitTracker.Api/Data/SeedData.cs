@@ -1,4 +1,5 @@
 using HabitTracker.Api.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace HabitTracker.Api.Data;
 
@@ -8,19 +9,27 @@ namespace HabitTracker.Api.Data;
 public static class SeedData
 {
     /// <summary>
-    /// Sample user ID for seeding (placeholder until User entity is implemented).
+    /// Sample user identity used for development seeding.
     /// </summary>
     public static readonly Guid SampleUserId = Guid.Parse("550e8400-e29b-41d4-a716-446655440001");
+
+    public const string SampleIdentityId = "dev-seed-identity-user-0001";
+
+    public const string SampleUserName = "Sample User";
+
+    public const string SampleUserEmail = "sample.user@habittracker.local";
 
     /// <summary>
     /// Seeds the database with 10 sample habits if none exist for the sample user.
     /// </summary>
-    public static async Task SeedSampleHabitsAsync(ApplicationDbContext context)
+    public static async Task SeedSampleHabitsAsync(ApplicationDbContext context, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        await EnsureSampleUserAsync(context, cancellationToken);
+
         // Check if habits already exist for the sample user
-        var existingCount = context.Habits.Count(h => h.UserId == SampleUserId);
+        var existingCount = await context.Habits.CountAsync(h => h.UserId == SampleUserId, cancellationToken);
         if (existingCount > 0)
         {
             Console.WriteLine($"ℹ️  Found {existingCount} existing habits for sample user. Skipping seed.");
@@ -145,7 +154,7 @@ public static class SeedData
 
         try
         {
-            var saved = await context.SaveChangesAsync();
+            var saved = await context.SaveChangesAsync(cancellationToken);
             Console.WriteLine($"✅ Successfully added {saved} habits!");
             Console.WriteLine($"\n📋 Sample Habits Created:");
             foreach (var habit in habits)
@@ -158,5 +167,24 @@ public static class SeedData
             Console.WriteLine($"❌ Error seeding habits: {ex.Message}");
             throw;
         }
+    }
+
+    private static async Task EnsureSampleUserAsync(ApplicationDbContext context, CancellationToken cancellationToken)
+    {
+        var existingUser = await context.Users.AnyAsync(u => u.Id == SampleUserId, cancellationToken);
+        if (existingUser)
+        {
+            return;
+        }
+
+        Console.WriteLine("👤 Creating sample user for development seeding...");
+
+        context.Users.Add(new User(
+            SampleUserId,
+            SampleIdentityId,
+            SampleUserName,
+            SampleUserEmail));
+
+        await context.SaveChangesAsync(cancellationToken);
     }
 }
