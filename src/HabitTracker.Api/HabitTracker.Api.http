@@ -17,7 +17,8 @@ Accept: application/json
 
 ### Get All Habits - Paginated with Sort (includes HATEOAS links: self, first, last, next, prev, create)
 GET {{HabitTracker.Api_HostAddress}}/api/habits?sort=name:asc&pageNumber=1&pageSize=10
-Accept: application/json
+Accept: application/hal+json
+# Accept: application/json
 
 ### Get Habits - Search
 GET {{HabitTracker.Api_HostAddress}}/api/habits?search=Run
@@ -50,6 +51,8 @@ Accept: application/json
 ### Create a New Habit (Binary - Daily Exercise)
 POST {{HabitTracker.Api_HostAddress}}/api/habits
 Content-Type: application/json
+Accept: application/hal+json
+# Accept: application/json
 
 {
   "name": "Morning Run",
@@ -63,6 +66,8 @@ Content-Type: application/json
 }
 
 ### Create a New Habit (Measurable - Read Pages)
+Accept: application/hal+json
+# Accept: application/json
 POST {{HabitTracker.Api_HostAddress}}/api/habits
 Content-Type: application/json
 
@@ -116,4 +121,5 @@ Content-Type: application/json
 
 ### Delete a Habit (replace {habitId} with actual ID)
 DELETE {{HabitTracker.Api_HostAddress}}/api/habits/{{habitId}}
-Accept: application/json
+Accept: application/hal+json
+# Accept: application/json
