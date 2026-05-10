@@ -31,12 +31,12 @@ public class TagsController : ControllerBase
     /// </summary>
     /// <returns>List of tags as DTOs, ordered by creation date.</returns>
     [HttpGet]
-    public IActionResult GetTags()
+    public async Task<IActionResult> GetTags(CancellationToken cancellationToken)
     {
-        var tags = _dbContext.Tags
+        var tags = await _dbContext.Tags
             .Where(t => t.UserId == _currentUserId)
             .OrderByDescending(t => t.CreatedAtUtc)
-            .ToList();
+            .ToListAsync(cancellationToken);
 
         var dtos = tags.Select(TagDto.FromEntity).ToList();
         return Ok(dtos);
@@ -48,9 +48,12 @@ public class TagsController : ControllerBase
     /// <param name="tagId">The tag ID.</param>
     /// <returns>The tag as a DTO, or 404 if not found or not owned by the user.</returns>
     [HttpGet("{tagId:guid}")]
-    public IActionResult GetTag(Guid tagId)
+    public async Task<IActionResult> GetTag(Guid tagId, CancellationToken cancellationToken)
     {
-        var tag = _dbContext.Tags.FirstOrDefault(t => t.Id == tagId && t.UserId == _currentUserId);
+        var tag = await _dbContext.Tags.FirstOrDefaultAsync(
+            t => t.Id == tagId && t.UserId == _currentUserId,
+            cancellationToken);
+
         return tag == null ? NotFound() : Ok(TagDto.FromEntity(tag));
     }
 
@@ -60,7 +63,7 @@ public class TagsController : ControllerBase
     /// <param name="request">The tag creation request.</param>
     /// <returns>The created tag as a DTO with 201 Created status.</returns>
     [HttpPost]
-    public IActionResult CreateTag([FromBody] CreateTagDto request)
+    public async Task<IActionResult> CreateTag([FromBody] CreateTagDto request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -70,8 +73,9 @@ public class TagsController : ControllerBase
         }
 
         // Check for duplicate tag name (unique per user)
-        var existingTag = _dbContext.Tags
-            .FirstOrDefault(t => t.UserId == _currentUserId && t.Name == request.Name);
+        var existingTag = await _dbContext.Tags.FirstOrDefaultAsync(
+            t => t.UserId == _currentUserId && t.Name == request.Name,
+            cancellationToken);
 
         if (existingTag != null)
         {
@@ -82,7 +86,7 @@ public class TagsController : ControllerBase
         var tag = new Tag(tagId, _currentUserId, request.Name);
 
         _dbContext.Tags.Add(tag);
-        _dbContext.SaveChanges();
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         var dto = TagDto.FromEntity(tag);
         return CreatedAtAction(nameof(GetTag), new { tagId = tag.Id }, dto);
@@ -95,7 +99,7 @@ public class TagsController : ControllerBase
     /// <param name="request">The update request containing the new name.</param>
     /// <returns>The updated tag as a DTO, or 404 if not found or not owned by the user.</returns>
     [HttpPut("{tagId:guid}")]
-    public IActionResult UpdateTag(Guid tagId, [FromBody] CreateTagDto request)
+    public async Task<IActionResult> UpdateTag(Guid tagId, [FromBody] CreateTagDto request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -104,15 +108,19 @@ public class TagsController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var tag = _dbContext.Tags.FirstOrDefault(t => t.Id == tagId && t.UserId == _currentUserId);
+        var tag = await _dbContext.Tags.FirstOrDefaultAsync(
+            t => t.Id == tagId && t.UserId == _currentUserId,
+            cancellationToken);
+
         if (tag == null)
         {
             return NotFound();
         }
 
         // Check for duplicate tag name (unique per user, but allow same name if updating the same tag)
-        var conflictingTag = _dbContext.Tags
-            .FirstOrDefault(t => t.UserId == _currentUserId && t.Name == request.Name && t.Id != tagId);
+        var conflictingTag = await _dbContext.Tags.FirstOrDefaultAsync(
+            t => t.UserId == _currentUserId && t.Name == request.Name && t.Id != tagId,
+            cancellationToken);
 
         if (conflictingTag != null)
         {
@@ -120,7 +128,7 @@ public class TagsController : ControllerBase
         }
 
         tag.UpdateName(request.Name);
-        _dbContext.SaveChanges();
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         var dto = TagDto.FromEntity(tag);
         return Ok(dto);
@@ -132,16 +140,19 @@ public class TagsController : ControllerBase
     /// <param name="tagId">The tag ID.</param>
     /// <returns>204 No Content on success, or 404 if not found or not owned by the user.</returns>
     [HttpDelete("{tagId:guid}")]
-    public IActionResult DeleteTag(Guid tagId)
+    public async Task<IActionResult> DeleteTag(Guid tagId, CancellationToken cancellationToken)
     {
-        var tag = _dbContext.Tags.FirstOrDefault(t => t.Id == tagId && t.UserId == _currentUserId);
+        var tag = await _dbContext.Tags.FirstOrDefaultAsync(
+            t => t.Id == tagId && t.UserId == _currentUserId,
+            cancellationToken);
+
         if (tag == null)
         {
             return NotFound();
         }
 
         _dbContext.Tags.Remove(tag);
-        _dbContext.SaveChanges();
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         return NoContent();
     }

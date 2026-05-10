@@ -3,6 +3,7 @@ using HabitTracker.Api.Dtos;
 using HabitTracker.Api.Entities;
 using HabitTracker.Api.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 
 namespace HabitTracker.Api.Controllers;
@@ -60,18 +61,21 @@ public class HabitsController : ControllerBase
     /// <returns>The habit details as a DTO (including tags), with HATEOAS links for HAL clients, or 404 if not found or not owned by the user.</returns>
     [HttpGet("{habitId:guid}")]
     [Produces("application/json", "application/hal+json")]
-    public IActionResult GetHabit(Guid habitId)
+    public async Task<IActionResult> GetHabit(Guid habitId, CancellationToken cancellationToken)
     {
-        var habit = _dbContext.Habits.FirstOrDefault(h => h.Id == habitId && h.UserId == _currentUserId);
+        var habit = await _dbContext.Habits.FirstOrDefaultAsync(
+            h => h.Id == habitId && h.UserId == _currentUserId,
+            cancellationToken);
+
         if (habit == null)
         {
             return NotFound();
         }
 
-        var tags = _dbContext.Tags
+        var tags = await _dbContext.Tags
             .Where(t => t.UserId == _currentUserId && t.HabitTags.Any(ht => ht.HabitId == habitId))
             .OrderBy(t => t.Name)
-            .ToList();
+            .ToListAsync(cancellationToken);
 
         var habitDetails = HabitDetailsDto.FromEntity(habit, tags);
 
@@ -92,7 +96,7 @@ public class HabitsController : ControllerBase
     /// <returns>The created habit as a DTO with 201 Created status, with HATEOAS links for HAL clients.</returns>
     [HttpPost]
     [Produces("application/json", "application/hal+json")]
-    public IActionResult CreateHabit([FromBody] CreateHabitDto request)
+    public async Task<IActionResult> CreateHabit([FromBody] CreateHabitDto request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -104,7 +108,7 @@ public class HabitsController : ControllerBase
         var habit = request.ToHabit(_currentUserId);
 
         _dbContext.Habits.Add(habit);
-        _dbContext.SaveChanges();
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         var habitDto = HabitDto.FromEntity(habit);
 
@@ -125,7 +129,7 @@ public class HabitsController : ControllerBase
     /// <param name="request">The complete replacement request.</param>
     /// <returns>The replaced habit as a DTO, or 404 if not found or not owned by the user.</returns>
     [HttpPut("{habitId:guid}")]
-    public IActionResult UpdateHabit(Guid habitId, [FromBody] UpdateHabitDto request)
+    public async Task<IActionResult> UpdateHabit(Guid habitId, [FromBody] UpdateHabitDto request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -134,7 +138,10 @@ public class HabitsController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var habit = _dbContext.Habits.FirstOrDefault(h => h.Id == habitId && h.UserId == _currentUserId);
+        var habit = await _dbContext.Habits.FirstOrDefaultAsync(
+            h => h.Id == habitId && h.UserId == _currentUserId,
+            cancellationToken);
+
         if (habit == null)
         {
             return NotFound();
@@ -143,7 +150,7 @@ public class HabitsController : ControllerBase
         // Apply full replacement via DTO mapping
         request.ApplyToHabit(habit);
 
-        _dbContext.SaveChanges();
+        await _dbContext.SaveChangesAsync(cancellationToken);
         return Ok(HabitDto.FromEntity(habit));
     }
 
@@ -154,7 +161,7 @@ public class HabitsController : ControllerBase
     /// <param name="request">The partial update request.</param>
     /// <returns>The updated habit as a DTO, or 404 if not found or not owned by the user.</returns>
     [HttpPatch("{habitId:guid}")]
-    public IActionResult PatchHabit(Guid habitId, [FromBody] PartialUpdateHabitDto request)
+    public async Task<IActionResult> PatchHabit(Guid habitId, [FromBody] PartialUpdateHabitDto request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -163,7 +170,10 @@ public class HabitsController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var habit = _dbContext.Habits.FirstOrDefault(h => h.Id == habitId && h.UserId == _currentUserId);
+        var habit = await _dbContext.Habits.FirstOrDefaultAsync(
+            h => h.Id == habitId && h.UserId == _currentUserId,
+            cancellationToken);
+
         if (habit == null)
         {
             return NotFound();
@@ -172,7 +182,7 @@ public class HabitsController : ControllerBase
         // Apply selective updates via DTO mapping
         request.ApplyToHabit(habit);
 
-        _dbContext.SaveChanges();
+        await _dbContext.SaveChangesAsync(cancellationToken);
         return Ok(HabitDto.FromEntity(habit));
     }
 
@@ -182,9 +192,12 @@ public class HabitsController : ControllerBase
     /// <param name="habitId">The habit ID.</param>
     /// <returns>204 No Content on success, 404 if not found or not owned by the user.</returns>
     [HttpDelete("{habitId:guid}")]
-    public IActionResult DeleteHabit(Guid habitId)
+    public async Task<IActionResult> DeleteHabit(Guid habitId, CancellationToken cancellationToken)
     {
-        var habit = _dbContext.Habits.FirstOrDefault(h => h.Id == habitId && h.UserId == _currentUserId);
+        var habit = await _dbContext.Habits.FirstOrDefaultAsync(
+            h => h.Id == habitId && h.UserId == _currentUserId,
+            cancellationToken);
+
         if (habit == null)
         {
             return NotFound();
@@ -192,7 +205,7 @@ public class HabitsController : ControllerBase
 
         // Soft delete via domain method
         habit.Archive();
-        _dbContext.SaveChanges();
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         return NoContent();
     }
@@ -204,11 +217,14 @@ public class HabitsController : ControllerBase
     /// <param name="request">Request containing list of tag IDs to associate with the habit.</param>
     /// <returns>200 OK with the list of tags now associated with the habit, or 404 if habit not found.</returns>
     [HttpPut("{habitId:guid}/tags")]
-    public IActionResult UpsertHabitTags(Guid habitId, [FromBody] UpsertHabitTagsRequest request)
+    public async Task<IActionResult> UpsertHabitTags(Guid habitId, [FromBody] UpsertHabitTagsRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var habit = _dbContext.Habits.FirstOrDefault(h => h.Id == habitId && h.UserId == _currentUserId);
+        var habit = await _dbContext.Habits.FirstOrDefaultAsync(
+            h => h.Id == habitId && h.UserId == _currentUserId,
+            cancellationToken);
+
         if (habit == null)
         {
             return NotFound();
@@ -217,17 +233,20 @@ public class HabitsController : ControllerBase
         if (request.TagIds == null || request.TagIds.Count == 0)
         {
             // Clear all tags if empty list provided
-            var existingJoins = _dbContext.HabitTags.Where(ht => ht.HabitId == habitId).ToList();
+            var existingJoins = await _dbContext.HabitTags
+                .Where(ht => ht.HabitId == habitId)
+                .ToListAsync(cancellationToken);
+
             _dbContext.HabitTags.RemoveRange(existingJoins);
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync(cancellationToken);
             return Ok(new List<TagDto>());
         }
 
         // Verify all provided tag IDs belong to current user
         var tagIds = request.TagIds.Distinct().ToList();
-        var userTags = _dbContext.Tags
+        var userTags = await _dbContext.Tags
             .Where(t => t.UserId == _currentUserId && tagIds.Contains(t.Id))
-            .ToList();
+            .ToListAsync(cancellationToken);
 
         if (userTags.Count != tagIds.Count)
         {
@@ -235,7 +254,10 @@ public class HabitsController : ControllerBase
         }
 
         // Remove existing joins for this habit
-        var existingJoins2 = _dbContext.HabitTags.Where(ht => ht.HabitId == habitId).ToList();
+        var existingJoins2 = await _dbContext.HabitTags
+            .Where(ht => ht.HabitId == habitId)
+            .ToListAsync(cancellationToken);
+
         _dbContext.HabitTags.RemoveRange(existingJoins2);
 
         // Add new joins
@@ -245,15 +267,14 @@ public class HabitsController : ControllerBase
             _dbContext.HabitTags.Add(habitTag);
         }
 
-        _dbContext.SaveChanges();
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         // Return the updated list of tags
-        var tagsForHabit = _dbContext.Tags
+        var tagsForHabit = await _dbContext.Tags
             .Where(t => tagIds.Contains(t.Id))
-            .Select(TagDto.FromEntity)
-            .ToList();
+            .ToListAsync(cancellationToken);
 
-        return Ok(tagsForHabit);
+        return Ok(tagsForHabit.Select(TagDto.FromEntity).ToList());
     }
 
     /// <summary>
@@ -263,29 +284,38 @@ public class HabitsController : ControllerBase
     /// <param name="tagId">The tag ID to remove.</param>
     /// <returns>204 No Content on success, or 404 if habit or relationship not found or not owned by the user.</returns>
     [HttpDelete("{habitId:guid}/tags/{tagId:guid}")]
-    public IActionResult RemoveTagFromHabit(Guid habitId, Guid tagId)
+    public async Task<IActionResult> RemoveTagFromHabit(Guid habitId, Guid tagId, CancellationToken cancellationToken)
     {
-        var habit = _dbContext.Habits.FirstOrDefault(h => h.Id == habitId && h.UserId == _currentUserId);
+        var habit = await _dbContext.Habits.FirstOrDefaultAsync(
+            h => h.Id == habitId && h.UserId == _currentUserId,
+            cancellationToken);
+
         if (habit == null)
         {
             return NotFound();
         }
 
-        var habitTag = _dbContext.HabitTags.FirstOrDefault(ht => ht.HabitId == habitId && ht.TagId == tagId);
+        var habitTag = await _dbContext.HabitTags.FirstOrDefaultAsync(
+            ht => ht.HabitId == habitId && ht.TagId == tagId,
+            cancellationToken);
+
         if (habitTag == null)
         {
             return NotFound();
         }
 
         // Verify the tag belongs to the current user (security check)
-        var tag = _dbContext.Tags.FirstOrDefault(t => t.Id == tagId && t.UserId == _currentUserId);
+        var tag = await _dbContext.Tags.FirstOrDefaultAsync(
+            t => t.Id == tagId && t.UserId == _currentUserId,
+            cancellationToken);
+
         if (tag == null)
         {
             return NotFound();
         }
 
         _dbContext.HabitTags.Remove(habitTag);
-        _dbContext.SaveChanges();
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         return NoContent();
     }
