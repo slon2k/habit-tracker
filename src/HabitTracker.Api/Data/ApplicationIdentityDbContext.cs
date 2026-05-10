@@ -1,0 +1,24 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+
+namespace HabitTracker.Api.Data;
+
+public sealed class ApplicationIdentityDbContext(DbContextOptions<ApplicationIdentityDbContext> options) : IdentityDbContext(options)
+{
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        base.OnModelCreating(builder);
+        builder.HasDefaultSchema(Schemas.Identity);
+
+        builder.Entity<IdentityUser>().ToTable("asp_net_users");
+        builder.Entity<IdentityRole>().ToTable("asp_net_roles");
+        builder.Entity<IdentityUserRole<string>>().ToTable("asp_net_user_roles");
+        builder.Entity<IdentityUserClaim<string>>().ToTable("asp_net_user_claims");
+        builder.Entity<IdentityRoleClaim<string>>().ToTable("asp_net_role_claims");
+        builder.Entity<IdentityUserToken<string>>().ToTable("asp_net_user_tokens");
+        builder.Entity<IdentityUserLogin<string>>().ToTable("asp_net_user_logins");
+    }
+}

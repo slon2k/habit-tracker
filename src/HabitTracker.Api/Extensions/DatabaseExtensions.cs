@@ -15,6 +15,11 @@ public static class DatabaseExtensions
                 builder.Configuration.GetConnectionString("Database"),
                 npgOptions => npgOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application)));
 
+        builder.Services.AddDbContext<ApplicationIdentityDbContext>(options =>
+            options.UseNpgsql(
+                builder.Configuration.GetConnectionString("Database"),
+                npgOptions => npgOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Identity)));
+
         return builder;
     }
 
@@ -29,9 +34,11 @@ public static class DatabaseExtensions
         ArgumentNullException.ThrowIfNull(app);
         using IServiceScope scope = app.Services.CreateScope();
         using ApplicationDbContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        using ApplicationIdentityDbContext identityDbContext = scope.ServiceProvider.GetRequiredService<ApplicationIdentityDbContext>();
         try
         {
-            await dbContext.Database.MigrateAsync().ConfigureAwait(false);
+            await dbContext.Database.MigrateAsync();
+            await identityDbContext.Database.MigrateAsync();
         }
         catch (Exception ex)
         {

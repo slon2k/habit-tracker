@@ -3,13 +3,13 @@ using HabitTracker.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddApi();
-builder.AddDatabase();
-builder.AddTelemetry();
+builder
+    .AddApi()
+    .AddDatabase()
+    .AddIdentityServices()
+    .AddTelemetry();
 
 var app = builder.Build();
-
-app.UseExceptionHandling();
 
 if (app.Environment.IsDevelopment())
 {
@@ -19,7 +19,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseExceptionHandling();
 app.MapControllers();
 app.MapHealthChecks("/health");
 
