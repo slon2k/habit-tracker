@@ -47,7 +47,7 @@ public class HabitsController : ControllerBase
         if (AcceptsHalJson())
         {
             var halLinks = BuildPaginationLinks(parameters, result.PageNumber, result.PageSize, result.TotalCount);
-            var halResult = new PagedResultWithLinks<HabitDto>(result.Items, result.TotalCount, result.PageNumber, result.PageSize, halLinks);
+            var halResult = new HalPagedResult<HabitDto>(result.Items, result.TotalCount, result.PageNumber, result.PageSize, halLinks);
             return Ok(halResult);
         }
 
@@ -82,7 +82,7 @@ public class HabitsController : ControllerBase
         if (AcceptsHalJson())
         {
             var halLinks = BuildDetailLinks(habitId, habit.IsArchived);
-            var halResult = new HabitWithLinks(habitDetails, halLinks);
+            var halResult = new HalResult<HabitDetailsDto>(habitDetails, halLinks);
             return Ok(halResult);
         }
 
@@ -115,7 +115,7 @@ public class HabitsController : ControllerBase
         if (AcceptsHalJson())
         {
             var halLinks = BuildCreatedLinks(habit.Id);
-            var halResult = new HabitCreatedWithLinks(habitDto, halLinks);
+            var halResult = new HalResult<HabitDto>(habitDto, halLinks);
             return CreatedAtAction(nameof(GetHabit), new { habitId = habit.Id }, halResult);
         }
 

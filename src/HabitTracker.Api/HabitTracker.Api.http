@@ -9,7 +9,8 @@ Accept: application/json
 
 ### Get All Habits
 GET {{HabitTracker.Api_HostAddress}}/api/habits
-Accept: application/json
+# Accept: application/json
+Accept: application/hal+json
 
 ### Get All Habits - With Pagination (Page 1, 5 items per page)
 GET {{HabitTracker.Api_HostAddress}}/api/habits?pageNumber=1&pageSize=5
@@ -66,10 +67,10 @@ Accept: application/hal+json
 }
 
 ### Create a New Habit (Measurable - Read Pages)
-Accept: application/hal+json
-# Accept: application/json
 POST {{HabitTracker.Api_HostAddress}}/api/habits
 Content-Type: application/json
+Accept: application/hal+json
+# Accept: application/json
 
 {
   "name": "Read",
