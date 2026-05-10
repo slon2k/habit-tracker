@@ -3,6 +3,7 @@ using HabitTracker.Api.Dtos;
 using HabitTracker.Api.Entities;
 using HabitTracker.Api.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 
 namespace HabitTracker.Api.Controllers;
 
@@ -29,8 +30,9 @@ public class HabitsController : ControllerBase
     /// <summary>
     /// Get all habits for the current user.
     /// </summary>
-    /// <returns>Paginated list of habits as DTOs with pagination metadata and HATEOAS links.</returns>
+    /// <returns>Paginated list of habits as DTOs with pagination metadata. Includes HATEOAS links for HAL clients.</returns>
     [HttpGet]
+    [Produces("application/json", "application/hal+json")]
     public async Task<IActionResult> GetHabits([FromQuery] HabitsQueryParameters? queryParameters, CancellationToken cancellationToken)
     {
         var parameters = queryParameters ?? new HabitsQueryParameters();
@@ -41,18 +43,23 @@ public class HabitsController : ControllerBase
             .ApplySorting(parameters.Sort)
             .ToPagedResultAsync(parameters.PageNumber, parameters.PageSize, HabitDto.FromEntity, cancellationToken);
 
-        var links = BuildPaginationLinks(parameters, result.PageNumber, result.PageSize, result.TotalCount);
-        var resultWithLinks = new PagedResultWithLinks<HabitDto>(result.Items, result.TotalCount, result.PageNumber, result.PageSize, links);
+        if (AcceptsHalJson())
+        {
+            var halLinks = BuildPaginationLinks(parameters, result.PageNumber, result.PageSize, result.TotalCount);
+            var halResult = new PagedResultWithLinks<HabitDto>(result.Items, result.TotalCount, result.PageNumber, result.PageSize, halLinks);
+            return Ok(halResult);
+        }
 
-        return Ok(resultWithLinks);
+        return Ok(result);
     }
 
     /// <summary>
     /// Get a single habit by ID, including its associated tags.
     /// </summary>
     /// <param name="habitId">The habit ID.</param>
-    /// <returns>The habit details as a DTO (including tags) with HATEOAS links, or 404 if not found or not owned by the user.</returns>
+    /// <returns>The habit details as a DTO (including tags), with HATEOAS links for HAL clients, or 404 if not found or not owned by the user.</returns>
     [HttpGet("{habitId:guid}")]
+    [Produces("application/json", "application/hal+json")]
     public IActionResult GetHabit(Guid habitId)
     {
         var habit = _dbContext.Habits.FirstOrDefault(h => h.Id == habitId && h.UserId == _currentUserId);
@@ -67,18 +74,24 @@ public class HabitsController : ControllerBase
             .ToList();
 
         var habitDetails = HabitDetailsDto.FromEntity(habit, tags);
-        var links = BuildDetailLinks(habitId, habit.IsArchived);
-        var response = new HabitWithLinks(habitDetails, links);
 
-        return Ok(response);
+        if (AcceptsHalJson())
+        {
+            var halLinks = BuildDetailLinks(habitId, habit.IsArchived);
+            var halResult = new HabitWithLinks(habitDetails, halLinks);
+            return Ok(halResult);
+        }
+
+        return Ok(habitDetails);
     }
 
     /// <summary>
     /// Create a new habit for the current user.
     /// </summary>
     /// <param name="request">The habit creation request.</param>
-    /// <returns>The created habit as a DTO with 201 Created status and HATEOAS links.</returns>
+    /// <returns>The created habit as a DTO with 201 Created status, with HATEOAS links for HAL clients.</returns>
     [HttpPost]
+    [Produces("application/json", "application/hal+json")]
     public IActionResult CreateHabit([FromBody] CreateHabitDto request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -94,10 +107,15 @@ public class HabitsController : ControllerBase
         _dbContext.SaveChanges();
 
         var habitDto = HabitDto.FromEntity(habit);
-        var links = BuildCreatedLinks(habit.Id);
-        var response = new HabitCreatedWithLinks(habitDto, links);
 
-        return CreatedAtAction(nameof(GetHabit), new { habitId = habit.Id }, response);
+        if (AcceptsHalJson())
+        {
+            var halLinks = BuildCreatedLinks(habit.Id);
+            var halResult = new HabitCreatedWithLinks(habitDto, halLinks);
+            return CreatedAtAction(nameof(GetHabit), new { habitId = habit.Id }, halResult);
+        }
+
+        return CreatedAtAction(nameof(GetHabit), new { habitId = habit.Id }, habitDto);
     }
 
     /// <summary>
@@ -428,4 +446,12 @@ public class HabitsController : ControllerBase
         var link = Url.Action(actionName, values: routeValues);
         return link ?? throw new InvalidOperationException($"Unable to generate route link for action '{actionName}'.");
     }
+
+    private bool AcceptsHalJson() => Request.GetTypedHeaders().Accept switch
+    {
+        null => false,
+        { Count: 0 } => false,
+        var acceptedMediaTypes => acceptedMediaTypes.Any(mediaType =>
+            string.Equals(mediaType.MediaType.Value, "application/hal+json", StringComparison.OrdinalIgnoreCase))
+    };
 }
