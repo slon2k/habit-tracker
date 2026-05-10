@@ -3,6 +3,7 @@ namespace HabitTracker.Api.Controllers;
 using HabitTracker.Api.Data;
 using HabitTracker.Api.Dtos.Auth;
 using HabitTracker.Api.Entities;
+using HabitTracker.Api.Services.Auth;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -15,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 public sealed class AuthController(
     UserManager<IdentityUser> userManager,
     SignInManager<IdentityUser> signInManager,
+    ITokenService tokenService,
     ApplicationDbContext applicationDbContext) : ControllerBase
 {
     [HttpPost("register")]
@@ -57,18 +59,16 @@ public sealed class AuthController(
     {
         ArgumentNullException.ThrowIfNull(loginDto);
 
-        var result = await signInManager.PasswordSignInAsync(loginDto.Email, loginDto.Password, isPersistent: false, lockoutOnFailure: true);
-
-        if (!result.Succeeded)
-        {
-            return Unauthorized();
-        }
-
         var identityUser = await userManager.FindByEmailAsync(loginDto.Email);
 
         if (identityUser == null)
         {
-            await signInManager.SignOutAsync();
+            return Unauthorized();
+        }
+        var result = await signInManager.CheckPasswordSignInAsync(identityUser, loginDto.Password, lockoutOnFailure: true);
+
+        if (!result.Succeeded)
+        {
             return Unauthorized();
         }
 
@@ -76,17 +76,11 @@ public sealed class AuthController(
 
         if (appUser == null)
         {
-            await signInManager.SignOutAsync();
             return Unauthorized();
         }
 
-        return Ok(new { appUser.Id });
-    }
-
-    [HttpPost("logout")]
-    public async Task<IActionResult> Logout()
-    {
-        await signInManager.SignOutAsync();
-        return NoContent();
+        var tokenResult = tokenService.CreateAccessToken(appUser.IdentityId, appUser.Id, appUser.Email);
+        var dto = new Dtos.Auth.LoginResultDto(tokenResult.AccessToken, tokenResult.ExpiresAtUtc);
+        return Ok(dto);
     }
 }
