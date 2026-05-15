@@ -1,17 +1,24 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
+using HabitTracker.Api.Data;
+using HabitTracker.Api.Entities;
 using HabitTracker.Api.Options;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace HabitTracker.Api.Services.Auth;
 
-public sealed class JwtTokenService(IOptions<JwtOptions> jwtOptionsAccessor) : ITokenService
+public sealed class JwtTokenService(
+    IOptions<JwtOptions> jwtOptionsAccessor,
+    ApplicationIdentityDbContext identityDbContext) : ITokenService
 {
     private readonly JwtOptions jwtOptions = jwtOptionsAccessor?.Value ?? throw new ArgumentNullException(nameof(jwtOptionsAccessor));
+    private readonly ApplicationIdentityDbContext identityDbContext = identityDbContext ?? throw new ArgumentNullException(nameof(identityDbContext));
 
     public JwtTokenResult CreateAccessToken(string identityUserId, Guid appUserId, string email)
     {
@@ -20,7 +27,7 @@ public sealed class JwtTokenService(IOptions<JwtOptions> jwtOptionsAccessor) : I
 
         ValidateOptions();
 
-        var expiresAtUtc = DateTime.UtcNow.AddMinutes(jwtOptions.AccessTokenMinutes);
+        var accessTokenExpiresAtUtc = DateTime.UtcNow.AddMinutes(jwtOptions.AccessTokenMinutes);
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key));
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
@@ -37,12 +44,59 @@ public sealed class JwtTokenService(IOptions<JwtOptions> jwtOptionsAccessor) : I
             issuer: jwtOptions.Issuer,
             audience: jwtOptions.Audience,
             claims: claims,
-            expires: expiresAtUtc,
+            expires: accessTokenExpiresAtUtc,
             signingCredentials: credentials);
 
-        var token = new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+        var accessToken = new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+        var refreshTokenResult = GenerateRefreshToken(identityUserId);
 
-        return new JwtTokenResult(token, expiresAtUtc);
+        return new JwtTokenResult(accessToken, accessTokenExpiresAtUtc, refreshTokenResult.Token, refreshTokenResult.ExpiresAtUtc);
+    }
+
+    public RefreshTokenResult GenerateRefreshToken(string identityUserId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(identityUserId);
+
+        var refreshTokenExpiresAtUtc = DateTime.UtcNow.AddDays(7);
+        var randomBytes = new byte[64];
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(randomBytes);
+        }
+        var token = Convert.ToBase64String(randomBytes);
+
+        var refreshToken = new RefreshToken(token, refreshTokenExpiresAtUtc, identityUserId);
+        identityDbContext.RefreshTokens.Add(refreshToken);
+        identityDbContext.SaveChanges();
+
+        return new RefreshTokenResult(token, refreshTokenExpiresAtUtc);
+    }
+
+    public string? ValidateRefreshToken(string refreshToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(refreshToken);
+
+        var token = identityDbContext.RefreshTokens.FirstOrDefault(rt => rt.Token == refreshToken);
+
+        if (token == null || token.IsExpired)
+        {
+            return null;
+        }
+
+        return token.UserId;
+    }
+
+    public void RevokeRefreshToken(string refreshToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(refreshToken);
+
+        var token = identityDbContext.RefreshTokens.FirstOrDefault(rt => rt.Token == refreshToken);
+
+        if (token != null)
+        {
+            identityDbContext.RefreshTokens.Remove(token);
+            identityDbContext.SaveChanges();
+        }
     }
 
     private void ValidateOptions()

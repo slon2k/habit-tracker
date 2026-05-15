@@ -81,7 +81,11 @@ public sealed class AuthController(
         }
 
         var tokenResult = tokenService.CreateAccessToken(appUser.IdentityId, appUser.Id, appUser.Email);
-        var dto = new LoginResultDto(tokenResult.AccessToken, tokenResult.ExpiresAtUtc);
+        var dto = new LoginResultDto(
+            tokenResult.AccessToken,
+            tokenResult.AccessTokenExpiresAtUtc,
+            tokenResult.RefreshToken,
+            tokenResult.RefreshTokenExpiresAtUtc);
         return Ok(dto);
     }
 }
