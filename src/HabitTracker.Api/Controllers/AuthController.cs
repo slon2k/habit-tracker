@@ -81,11 +81,49 @@ public sealed class AuthController(
         }
 
         var tokenResult = tokenService.CreateAccessToken(appUser.IdentityId, appUser.Id, appUser.Email);
+
         var dto = new LoginResultDto(
             tokenResult.AccessToken,
             tokenResult.AccessTokenExpiresAtUtc,
             tokenResult.RefreshToken,
             tokenResult.RefreshTokenExpiresAtUtc);
+        return Ok(dto);
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh(RefreshTokenDto refreshTokenDto, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(refreshTokenDto);
+
+        var identityUserId = tokenService.ValidateRefreshToken(refreshTokenDto.RefreshToken, refreshTokenDto.AccessToken);
+
+        if (identityUserId == null)
+        {
+            return Unauthorized();
+        }
+
+        var identityUser = await userManager.FindByIdAsync(identityUserId);
+
+        if (identityUser == null)
+        {
+            return Unauthorized();
+        }
+
+        var appUser = await applicationDbContext.Users.FirstOrDefaultAsync(u => u.IdentityId == identityUser.Id, cancellationToken);
+
+        if (appUser == null)
+        {
+            return Unauthorized();
+        }
+
+        var tokenResult = tokenService.CreateAccessToken(appUser.IdentityId, appUser.Id, appUser.Email);
+
+        var dto = new LoginResultDto(
+            tokenResult.AccessToken,
+            tokenResult.AccessTokenExpiresAtUtc,
+            tokenResult.RefreshToken,
+            tokenResult.RefreshTokenExpiresAtUtc);
+        
         return Ok(dto);
     }
 }

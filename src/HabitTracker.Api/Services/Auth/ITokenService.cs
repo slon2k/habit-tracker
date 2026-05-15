@@ -10,7 +10,7 @@ public interface ITokenService
     RefreshTokenResult GenerateRefreshToken(string identityUserId);
 
     // Validates a given refresh token and returns the associated user ID if valid
-    string? ValidateRefreshToken(string refreshToken);
+    string? ValidateRefreshToken(string refreshToken, string accessToken);
 
     // Revokes a refresh token to prevent further use
     void RevokeRefreshToken(string refreshToken);

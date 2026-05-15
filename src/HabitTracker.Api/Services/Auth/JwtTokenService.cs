@@ -7,7 +7,6 @@ using HabitTracker.Api.Data;
 using HabitTracker.Api.Entities;
 using HabitTracker.Api.Options;
 
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -57,7 +56,10 @@ public sealed class JwtTokenService(
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(identityUserId);
 
-        var refreshTokenExpiresAtUtc = DateTime.UtcNow.AddDays(7);
+        var existingTokens = identityDbContext.RefreshTokens.Where(rt => rt.UserId == identityUserId);
+        identityDbContext.RefreshTokens.RemoveRange(existingTokens);
+
+        var refreshTokenExpiresAtUtc = DateTime.UtcNow.AddDays(jwtOptions.RefreshTokenDays);
         var randomBytes = new byte[64];
         using (var rng = RandomNumberGenerator.Create())
         {
@@ -72,18 +74,45 @@ public sealed class JwtTokenService(
         return new RefreshTokenResult(token, refreshTokenExpiresAtUtc);
     }
 
-    public string? ValidateRefreshToken(string refreshToken)
+    public string? ValidateRefreshToken(string refreshToken, string accessToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(refreshToken);
 
-        var token = identityDbContext.RefreshTokens.FirstOrDefault(rt => rt.Token == refreshToken);
-
-        if (token == null || token.IsExpired)
+        if (ValidateAccessToken(accessToken) is not string identityUserId)
         {
             return null;
         }
 
-        return token.UserId;
+        var token = identityDbContext.RefreshTokens.FirstOrDefault(rt => rt.Token == refreshToken);
+
+        return token == null || token.IsExpired || token.UserId != identityUserId ? null : token.UserId;
+    }
+
+    private string? ValidateAccessToken(string accessToken)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key));
+        try
+        {
+            var principal = tokenHandler.ValidateToken(accessToken, new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = jwtOptions.Issuer,
+                ValidateAudience = true,
+                ValidAudience = jwtOptions.Audience,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = signingKey,
+                #pragma warning disable CA5404 // Do not disable token validation checks
+                ValidateLifetime = false // We want to validate expired tokens for refresh token flow
+                #pragma warning restore CA5404
+            }, out SecurityToken _);
+
+            return principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public void RevokeRefreshToken(string refreshToken)
@@ -124,6 +153,11 @@ public sealed class JwtTokenService(
         if (jwtOptions.AccessTokenMinutes <= 0)
         {
             throw new InvalidOperationException("JWT access token lifetime must be greater than zero minutes.");
+        }
+
+        if (jwtOptions.RefreshTokenDays <= 0)
+        {
+            throw new InvalidOperationException("JWT refresh token lifetime must be greater than zero days.");
         }
     }
 }
