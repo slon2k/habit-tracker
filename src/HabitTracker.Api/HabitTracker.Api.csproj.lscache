@@ -86,6 +86,9 @@ Data/
   20260510141930_AddTagUserForeignKey.cs
   20260510141930_AddTagUserForeignKey.Designer.cs
   ApplicationDbContextModelSnapshot.cs
+  IdentityMigrations/
+   20260515151621_MoveRefreshTokensToIdentity.cs
+   20260515151621_MoveRefreshTokensToIdentity.Designer.cs
  Schemas.cs
  SeedData.cs
 Dtos/Auth/
