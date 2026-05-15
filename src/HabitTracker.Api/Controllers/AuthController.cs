@@ -51,6 +51,7 @@ public sealed class AuthController(
             throw;
         }
 
+
         return CreatedAtAction(null, new { id = appUser.Id }, new { appUser.Id });
     }
 
@@ -80,7 +81,7 @@ public sealed class AuthController(
         }
 
         var tokenResult = tokenService.CreateAccessToken(appUser.IdentityId, appUser.Id, appUser.Email);
-        var dto = new Dtos.Auth.LoginResultDto(tokenResult.AccessToken, tokenResult.ExpiresAtUtc);
+        var dto = new LoginResultDto(tokenResult.AccessToken, tokenResult.ExpiresAtUtc);
         return Ok(dto);
     }
 }
