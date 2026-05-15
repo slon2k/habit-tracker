@@ -1,5 +1,6 @@
 using HabitTracker.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace HabitTracker.Api.Extensions;
@@ -11,14 +12,17 @@ public static class DatabaseExtensions
         ArgumentNullException.ThrowIfNull(builder);
 
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(
-                builder.Configuration.GetConnectionString("Database"),
-                npgOptions => npgOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application)));
+            options
+                .UseNpgsql(
+                    builder.Configuration.GetConnectionString("Database"),
+                    npgOptions => npgOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application))
+                .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
 
         builder.Services.AddDbContext<ApplicationIdentityDbContext>(options =>
             options.UseNpgsql(
                 builder.Configuration.GetConnectionString("Database"),
                 npgOptions => npgOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Identity)));
+
 
         return builder;
     }
