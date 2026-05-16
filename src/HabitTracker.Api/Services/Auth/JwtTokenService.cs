@@ -5,6 +5,7 @@ using System.Text;
 
 using HabitTracker.Api.Data;
 using HabitTracker.Api.Entities;
+using Microsoft.AspNetCore.Identity;
 using HabitTracker.Api.Options;
 
 using Microsoft.Extensions.Options;
@@ -14,12 +15,14 @@ namespace HabitTracker.Api.Services.Auth;
 
 public sealed class JwtTokenService(
     IOptions<JwtOptions> jwtOptionsAccessor,
-    ApplicationIdentityDbContext identityDbContext) : ITokenService
+    ApplicationIdentityDbContext identityDbContext,
+    UserManager<IdentityUser> userManager) : ITokenService
 {
     private readonly JwtOptions jwtOptions = jwtOptionsAccessor?.Value ?? throw new ArgumentNullException(nameof(jwtOptionsAccessor));
     private readonly ApplicationIdentityDbContext identityDbContext = identityDbContext ?? throw new ArgumentNullException(nameof(identityDbContext));
+    private readonly UserManager<IdentityUser> userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
 
-    public JwtTokenResult CreateAccessToken(string identityUserId, Guid appUserId, string email)
+    public async Task<JwtTokenResult> CreateAccessToken(string identityUserId, Guid appUserId, string email)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(identityUserId);
         ArgumentException.ThrowIfNullOrWhiteSpace(email);
@@ -38,6 +41,15 @@ public sealed class JwtTokenService(
             new("app_user_id", appUserId.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
+
+        var identityUser = await userManager.FindByIdAsync(identityUserId);
+        
+        if (identityUser != null)
+        {
+            var roles = await userManager.GetRolesAsync(identityUser);
+            var roleClaims = roles.Select(role => new Claim(ClaimTypes.Role, role));
+            claims.AddRange(roleClaims);
+        }
 
         var tokenDescriptor = new JwtSecurityToken(
             issuer: jwtOptions.Issuer,

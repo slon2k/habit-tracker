@@ -80,7 +80,7 @@ public sealed class AuthController(
             return Unauthorized();
         }
 
-        var tokenResult = tokenService.CreateAccessToken(appUser.IdentityId, appUser.Id, appUser.Email);
+        var tokenResult = await tokenService.CreateAccessToken(appUser.IdentityId, appUser.Id, appUser.Email);
 
         var dto = new LoginResultDto(
             tokenResult.AccessToken,
@@ -116,7 +116,7 @@ public sealed class AuthController(
             return Unauthorized();
         }
 
-        var tokenResult = tokenService.CreateAccessToken(appUser.IdentityId, appUser.Id, appUser.Email);
+        var tokenResult = await tokenService.CreateAccessToken(appUser.IdentityId, appUser.Id, appUser.Email);
 
         var dto = new LoginResultDto(
             tokenResult.AccessToken,

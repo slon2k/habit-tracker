@@ -4,7 +4,7 @@ public sealed record RefreshTokenResult(string Token, DateTime ExpiresAtUtc);
 
 public interface ITokenService
 {
-    JwtTokenResult CreateAccessToken(string identityUserId, Guid appUserId, string email);
+    Task<JwtTokenResult> CreateAccessToken(string identityUserId, Guid appUserId, string email);
 
     // Generates a new refresh token for a user
     RefreshTokenResult GenerateRefreshToken(string identityUserId);

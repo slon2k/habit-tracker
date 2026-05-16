@@ -1,10 +1,11 @@
 # For HTTPS locally run with: dotnet run --launch-profile https
+# From root folder: dotnet run --project .\src\HabitTracker.Api\  --launch-profile https 
 # For Docker: https://localhost:5001
 @HabitTracker.Api_HostAddress = https://localhost:5001
 @habitId = 1918e441-f48a-4961-afca-bcf1a09777c3
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5OTY2YzBkYy1kOTk0LTRiNjEtOWViMi1mNGU3YzdmZmVjODEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6Ijk5NjZjMGRjLWQ5OTQtNGI2MS05ZWIyLWY0ZTdjN2ZmZWM4MSIsImVtYWlsIjoiQURNSU5ASEFCSVRUUkFDS0VSLkxPQ0FMIiwiYXBwX3VzZXJfaWQiOiI2NDRlZmRmNS1mNmExLTQ3OGMtYTUzMi1jOGJkMTljNmU3YzAiLCJqdGkiOiJjYWE4MTY1Yy1mZTI5LTRiMjYtYTM5MS01YTA1ZGJlNmNjM2EiLCJleHAiOjE3Nzg5MzIyNzYsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjUwMDEiLCJhdWQiOiJIYWJpdFRyYWNrZXIuQ2xpZW50In0.EEtOOwBReBz1q287NwR_EW9ErorVNmpKvwkQZ0zywwI
-@refreshToken = Qq+0zLdStXApLC8OLEN+nf2ZYJoO1xdzgK77D4bL6ZvSJfCw90YPtq/KB206MU50C/tQjnjQbGqJMDdshoIm9Q==
-
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5OTY2YzBkYy1kOTk0LTRiNjEtOWViMi1mNGU3YzdmZmVjODEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6Ijk5NjZjMGRjLWQ5OTQtNGI2MS05ZWIyLWY0ZTdjN2ZmZWM4MSIsImVtYWlsIjoiQURNSU5ASEFCSVRUUkFDS0VSLkxPQ0FMIiwiYXBwX3VzZXJfaWQiOiI2NDRlZmRmNS1mNmExLTQ3OGMtYTUzMi1jOGJkMTljNmU3YzAiLCJqdGkiOiI0YjIwNzZkOS1jOTBkLTRjZGEtOWVkOC1jMGIzMGQ5NjZiZWEiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsImV4cCI6MTc3ODk0MDY3OCwiaXNzIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NTAwMSIsImF1ZCI6IkhhYml0VHJhY2tlci5DbGllbnQifQ.3Lw4Vjvxy96OCLZfnl7w-_rxNOtJaQWWadiNH4iEvb0
+@refreshToken = +E+QNBhGI4XkQAZiJtktqKEcPK+aHJQ+5f6JD/yvAonhn7RNKPdWY0pnCUVJ3kZ74YfKEola2S46xyUidhVHQA==
+@userId = 644efdf5-f6a1-478c-a532-c8bd19c6e7c0
 
 ### Health Check
 GET {{HabitTracker.Api_HostAddress}}/health
@@ -187,3 +188,11 @@ Content-Type: application/json
   "email": "admin@habittracker.local",
   "password": "Habbit123!"
 }
+
+### User Roles Management (Admin Only)
+GET {{HabitTracker.Api_HostAddress}}/api/users/{{userId}}/roles/
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+
+

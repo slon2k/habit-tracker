@@ -21,15 +21,15 @@ public class RoleConfiguration : IEntityTypeConfiguration<IdentityRole>
             new IdentityRole
             {
                 Id = MemberRoleId,
-                Name = Roles.Member,
-                NormalizedName = Roles.Member.ToUpperInvariant(),
+                Name = nameof(AppRole.Member),
+                NormalizedName = nameof(AppRole.Member).ToUpperInvariant(),
                 ConcurrencyStamp = MemberRoleConcurrencyStamp,
             },
             new IdentityRole
             {
                 Id = AdminRoleId,
-                Name = Roles.Admin,
-                NormalizedName = Roles.Admin.ToUpperInvariant(),
+                Name = nameof(AppRole.Admin),
+                NormalizedName = nameof(AppRole.Admin).ToUpperInvariant(),
                 ConcurrencyStamp = AdminRoleConcurrencyStamp,
             }
         );

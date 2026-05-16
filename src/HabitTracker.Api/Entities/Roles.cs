@@ -1,7 +1,10 @@
 namespace HabitTracker.Api.Entities;
 
-public static class Roles
+using System.Text.Json.Serialization;
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum AppRole
 {
-    public const string Member = nameof(Member);
-    public const string Admin = nameof(Admin);
+    Member,
+    Admin,
 }

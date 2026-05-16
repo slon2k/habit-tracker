@@ -85,9 +85,9 @@ public static class DatabaseExtensions
         var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
         var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-        if (!await roleManager.RoleExistsAsync(Roles.Admin))
+        if (!await roleManager.RoleExistsAsync(nameof(AppRole.Admin)))
         {
-            var createRoleResult = await roleManager.CreateAsync(new IdentityRole(Roles.Admin));
+            var createRoleResult = await roleManager.CreateAsync(new IdentityRole(nameof(AppRole.Admin)));
             if (!createRoleResult.Succeeded)
             {
                 var reason = string.Join(", ", createRoleResult.Errors.Select(e => $"{e.Code}:{e.Description}"));
@@ -117,9 +117,9 @@ public static class DatabaseExtensions
             }
         }
 
-        if (!await userManager.IsInRoleAsync(identityUser, Roles.Admin))
+        if (!await userManager.IsInRoleAsync(identityUser, nameof(AppRole.Admin)))
         {
-            var addRoleResult = await userManager.AddToRoleAsync(identityUser, Roles.Admin);
+            var addRoleResult = await userManager.AddToRoleAsync(identityUser, nameof(AppRole.Admin));
             if (!addRoleResult.Succeeded)
             {
                 var reason = string.Join(", ", addRoleResult.Errors.Select(e => $"{e.Code}:{e.Description}"));
