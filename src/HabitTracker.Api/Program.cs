@@ -3,12 +3,11 @@ using HabitTracker.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddScoped<JwtDebugMiddleware>();
-
 builder
     .AddApi()
     .AddDatabase()
     .AddIdentityServices()
+    .AddAuthenticationServices()
     .AddTelemetry();
 
 var app = builder.Build();
@@ -21,7 +20,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseMiddleware<JwtDebugMiddleware>();
 app.UseExceptionHandling();
 app.UseAuthentication();
 app.UseAuthorization();
