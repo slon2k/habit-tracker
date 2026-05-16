@@ -2,8 +2,8 @@
 # For Docker: https://localhost:5001
 @HabitTracker.Api_HostAddress = https://localhost:5001
 @habitId = 1918e441-f48a-4961-afca-bcf1a09777c3
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NzNhZjg0Mi1mMmY4LTRkMWItYjA5MC0yZDQ2MWU2N2NiMzUiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6Ijc3M2FmODQyLWYyZjgtNGQxYi1iMDkwLTJkNDYxZTY3Y2IzNSIsImVtYWlsIjoiVVNFUjFASEFCSVRUUkFDS0VSLkNPTSIsImFwcF91c2VyX2lkIjoiZmJiNGY5MTUtM2FiYy00MjRiLTg3ZmQtOWFhOWIwMTZhOWQ1IiwianRpIjoiY2U0Zjg0NTMtZDIxYi00MmUyLWFlZjktMTI3ZTYzOGM1M2Q2IiwiZXhwIjoxNzc4OTMwMTA1LCJpc3MiOiJodHRwczovL2xvY2FsaG9zdDo1MDAxIiwiYXVkIjoiSGFiaXRUcmFja2VyLkNsaWVudCJ9.Pu4iQ0ePJgzZnt26ml8oWN9VUmu9mtJXt6ab3M9P-mc
-@refreshToken = iKUvxU+mSgyqsI76qxgS7O2akcCGYUSM+GPVklAI9CkCub9pNi095gnOCa2iTK6KFzeaolQaNWoWjaUDfITMlA==
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5OTY2YzBkYy1kOTk0LTRiNjEtOWViMi1mNGU3YzdmZmVjODEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6Ijk5NjZjMGRjLWQ5OTQtNGI2MS05ZWIyLWY0ZTdjN2ZmZWM4MSIsImVtYWlsIjoiQURNSU5ASEFCSVRUUkFDS0VSLkxPQ0FMIiwiYXBwX3VzZXJfaWQiOiI2NDRlZmRmNS1mNmExLTQ3OGMtYTUzMi1jOGJkMTljNmU3YzAiLCJqdGkiOiJjYWE4MTY1Yy1mZTI5LTRiMjYtYTM5MS01YTA1ZGJlNmNjM2EiLCJleHAiOjE3Nzg5MzIyNzYsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjUwMDEiLCJhdWQiOiJIYWJpdFRyYWNrZXIuQ2xpZW50In0.EEtOOwBReBz1q287NwR_EW9ErorVNmpKvwkQZ0zywwI
+@refreshToken = Qq+0zLdStXApLC8OLEN+nf2ZYJoO1xdzgK77D4bL6ZvSJfCw90YPtq/KB206MU50C/tQjnjQbGqJMDdshoIm9Q==
 
 
 ### Health Check
@@ -179,3 +179,11 @@ GET {{HabitTracker.Api_HostAddress}}/api/users/me
 Accept: application/json
 Authorization: Bearer {{accessToken}}
 
+### Login Admin User
+POST {{HabitTracker.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@habittracker.local",
+  "password": "Habbit123!"
+}
