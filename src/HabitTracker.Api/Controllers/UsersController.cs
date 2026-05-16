@@ -3,19 +3,17 @@ using HabitTracker.Api.Dtos;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace HabitTracker.Api.Controllers;
 
 [Authorize]
-[ApiController]
 [Route("api/users")]
-public sealed class UsersController(ApplicationDbContext applicationDbContext) : ControllerBase
+public sealed class UsersController(ApplicationDbContext applicationDbContext) : BaseApiController(applicationDbContext)
 {
     [HttpGet("{id:guid}")]
     public IActionResult GetUserById(Guid id)
     {
-        var user = applicationDbContext.Users.FirstOrDefault(u => u.Id == id);
+        var user = ApplicationDbContext.Users.FirstOrDefault(u => u.Id == id);
 
         if (user == null)        
         {
@@ -26,38 +24,12 @@ public sealed class UsersController(ApplicationDbContext applicationDbContext) :
     }
 
     [HttpGet("me")]
-    public IActionResult GetCurrentUser()
+    public async Task<IActionResult> GetCurrentUser()
     {
-        if (HttpContext.User is not ClaimsPrincipal principal)
-        {
-            return Unauthorized();
-        }
-
-        var appUserIdClaim = principal.FindFirstValue("app_user_id");
-
-        if (Guid.TryParse(appUserIdClaim, out var appUserId))
-        {
-            var userByAppId = applicationDbContext.Users.FirstOrDefault(u => u.Id == appUserId);
-
-            if (userByAppId != null)
-            {
-                return Ok(UserDto.FromEntity(userByAppId));
-            }
-        }
-
-        var identityId = principal.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? principal.FindFirstValue("sub");
-
-        if (string.IsNullOrWhiteSpace(identityId))
-        {
-            return Unauthorized();
-        }
-
-        var user = applicationDbContext.Users.FirstOrDefault(u => u.IdentityId == identityId);
-
+        var user = await GetCurrentUserAsync();
         if (user == null)
         {
-            return NotFound();
+            return Unauthorized();
         }
 
         return Ok(UserDto.FromEntity(user));

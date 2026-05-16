@@ -1,0 +1,67 @@
+using HabitTracker.Api.Data;
+using HabitTracker.Api.Entities;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+
+namespace HabitTracker.Api.Controllers;
+
+/// <summary>
+/// Base controller providing common authentication and authorization utilities for API controllers.
+/// </summary>
+[ApiController]
+public abstract class BaseApiController(ApplicationDbContext applicationDbContext) : ControllerBase
+{
+    protected ApplicationDbContext ApplicationDbContext { get; } = applicationDbContext ?? throw new ArgumentNullException(nameof(applicationDbContext));
+
+    /// <summary>
+    /// Resolves the current authenticated user from JWT claims.
+    /// Tries multiple claim types to handle different JWT claim mapping strategies.
+    /// </summary>
+    /// <returns>The current user entity, or null if user claims are invalid or user not found in database.</returns>
+    protected async Task<User?> GetCurrentUserAsync()
+    {
+        if (HttpContext.User is not ClaimsPrincipal principal)
+        {
+            return null;
+        }
+
+        // Try app_user_id claim first (directly maps to User.Id)
+        var appUserIdClaim = principal.FindFirstValue("app_user_id");
+        if (Guid.TryParse(appUserIdClaim, out var appUserId))
+        {
+            var userByAppId = await ApplicationDbContext.Users.FindAsync(appUserId);
+            if (userByAppId != null)
+            {
+                return userByAppId;
+            }
+        }
+
+        // Fall back to identity claims (mapped to ClaimTypes.NameIdentifier or raw "sub")
+        // JwtBearer may map "sub" to ClaimTypes.NameIdentifier depending on configuration
+        var identityId = principal.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? principal.FindFirstValue("sub");
+
+        if (string.IsNullOrWhiteSpace(identityId))
+        {
+            return null;
+        }
+
+        var userByIdentityId = ApplicationDbContext.Users.FirstOrDefault(u => u.IdentityId == identityId);
+        return userByIdentityId;
+    }
+
+    /// <summary>
+    /// Resolves the current authenticated user and returns 401 Unauthorized if not found.
+    /// Useful for quick inline authorization checks in controller actions.
+    /// </summary>
+    /// <returns>The current user entity, or an Unauthorized IActionResult if resolution fails.</returns>
+    protected async Task<(User? user, IActionResult? error)> GetCurrentUserOrUnauthorizedAsync()
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null)
+        {
+            return (null, Unauthorized());
+        }
+        return (user, null);
+    }
+}

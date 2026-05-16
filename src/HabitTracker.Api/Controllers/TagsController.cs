@@ -1,31 +1,17 @@
 using HabitTracker.Api.Data;
 using HabitTracker.Api.Dtos;
 using HabitTracker.Api.Entities;
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HabitTracker.Api.Controllers;
 
-[ApiController]
+[Authorize]
 [Route("api/tags")]
-public class TagsController : ControllerBase
+public class TagsController(ApplicationDbContext dbContext) : BaseApiController(dbContext)
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    /// <summary>
-    /// Placeholder for authenticated user's ID.
-    /// Implementation note: Extract from JWT claims/identity when authentication is implemented.
-    /// </summary>
-#pragma warning disable S1135 // Suppress SonarAnalyzer TODO rule
-    private readonly Guid _currentUserId = Guid.Parse("550e8400-e29b-41d4-a716-446655440001");
-#pragma warning restore S1135
-
-    public TagsController(ApplicationDbContext dbContext)
-    {
-        ArgumentNullException.ThrowIfNull(dbContext);
-        _dbContext = dbContext;
-    }
-
     /// <summary>
     /// Get all tags for the current user.
     /// </summary>
@@ -33,8 +19,12 @@ public class TagsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetTags(CancellationToken cancellationToken)
     {
-        var tags = await _dbContext.Tags
-            .Where(t => t.UserId == _currentUserId)
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser == null)
+            return Unauthorized();
+
+        var tags = await ApplicationDbContext.Tags
+            .Where(t => t.UserId == currentUser.Id)
             .OrderByDescending(t => t.CreatedAtUtc)
             .ToListAsync(cancellationToken);
 
@@ -50,8 +40,12 @@ public class TagsController : ControllerBase
     [HttpGet("{tagId:guid}")]
     public async Task<IActionResult> GetTag(Guid tagId, CancellationToken cancellationToken)
     {
-        var tag = await _dbContext.Tags.FirstOrDefaultAsync(
-            t => t.Id == tagId && t.UserId == _currentUserId,
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser == null)
+            return Unauthorized();
+
+        var tag = await ApplicationDbContext.Tags.FirstOrDefaultAsync(
+            t => t.Id == tagId && t.UserId == currentUser.Id,
             cancellationToken);
 
         return tag == null ? NotFound() : Ok(TagDto.FromEntity(tag));
@@ -67,14 +61,18 @@ public class TagsController : ControllerBase
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser == null)
+            return Unauthorized();
+
         if (!ModelState.IsValid)
         {
             return ValidationProblem(ModelState);
         }
 
         // Check for duplicate tag name (unique per user)
-        var existingTag = await _dbContext.Tags.FirstOrDefaultAsync(
-            t => t.UserId == _currentUserId && t.Name == request.Name,
+        var existingTag = await ApplicationDbContext.Tags.FirstOrDefaultAsync(
+            t => t.UserId == currentUser.Id && t.Name == request.Name,
             cancellationToken);
 
         if (existingTag != null)
@@ -83,10 +81,10 @@ public class TagsController : ControllerBase
         }
 
         var tagId = Guid.NewGuid();
-        var tag = new Tag(tagId, _currentUserId, request.Name);
+        var tag = new Tag(tagId, currentUser.Id, request.Name);
 
-        _dbContext.Tags.Add(tag);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        ApplicationDbContext.Tags.Add(tag);
+        await ApplicationDbContext.SaveChangesAsync(cancellationToken);
 
         var dto = TagDto.FromEntity(tag);
         return CreatedAtAction(nameof(GetTag), new { tagId = tag.Id }, dto);
@@ -103,13 +101,17 @@ public class TagsController : ControllerBase
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        if (error != null)
+            return error;
+
         if (!ModelState.IsValid)
         {
             return ValidationProblem(ModelState);
         }
 
-        var tag = await _dbContext.Tags.FirstOrDefaultAsync(
-            t => t.Id == tagId && t.UserId == _currentUserId,
+        var tag = await ApplicationDbContext.Tags.FirstOrDefaultAsync(
+            t => t.Id == tagId && t.UserId == currentUser!.Id,
             cancellationToken);
 
         if (tag == null)
@@ -118,8 +120,8 @@ public class TagsController : ControllerBase
         }
 
         // Check for duplicate tag name (unique per user, but allow same name if updating the same tag)
-        var conflictingTag = await _dbContext.Tags.FirstOrDefaultAsync(
-            t => t.UserId == _currentUserId && t.Name == request.Name && t.Id != tagId,
+        var conflictingTag = await ApplicationDbContext.Tags.FirstOrDefaultAsync(
+            t => t.UserId == currentUser!.Id && t.Name == request.Name && t.Id != tagId,
             cancellationToken);
 
         if (conflictingTag != null)
@@ -128,7 +130,7 @@ public class TagsController : ControllerBase
         }
 
         tag.UpdateName(request.Name);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await ApplicationDbContext.SaveChangesAsync(cancellationToken);
 
         var dto = TagDto.FromEntity(tag);
         return Ok(dto);
@@ -142,8 +144,12 @@ public class TagsController : ControllerBase
     [HttpDelete("{tagId:guid}")]
     public async Task<IActionResult> DeleteTag(Guid tagId, CancellationToken cancellationToken)
     {
-        var tag = await _dbContext.Tags.FirstOrDefaultAsync(
-            t => t.Id == tagId && t.UserId == _currentUserId,
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        if (error != null)
+            return error;
+
+        var tag = await ApplicationDbContext.Tags.FirstOrDefaultAsync(
+            t => t.Id == tagId && t.UserId == currentUser!.Id,
             cancellationToken);
 
         if (tag == null)
@@ -151,8 +157,8 @@ public class TagsController : ControllerBase
             return NotFound();
         }
 
-        _dbContext.Tags.Remove(tag);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        ApplicationDbContext.Tags.Remove(tag);
+        await ApplicationDbContext.SaveChangesAsync(cancellationToken);
 
         return NoContent();
     }

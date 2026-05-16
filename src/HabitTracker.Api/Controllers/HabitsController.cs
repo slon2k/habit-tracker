@@ -2,32 +2,17 @@ using HabitTracker.Api.Data;
 using HabitTracker.Api.Dtos;
 using HabitTracker.Api.Entities;
 using HabitTracker.Api.Extensions;
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Net.Http.Headers;
 
 namespace HabitTracker.Api.Controllers;
 
-[ApiController]
+[Authorize]
 [Route("api/habits")]
-public class HabitsController : ControllerBase
+public class HabitsController(ApplicationDbContext dbContext) : BaseApiController(dbContext)
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    /// <summary>
-    /// Placeholder for authenticated user's ID. 
-    /// Implementation note: Extract from JWT claims/identity when authentication is implemented.
-    /// </summary>
-#pragma warning disable S1135 // Suppress SonarAnalyzer TODO rule
-    private readonly Guid _currentUserId = Guid.Parse("550e8400-e29b-41d4-a716-446655440001");
-#pragma warning restore S1135
-
-    public HabitsController(ApplicationDbContext dbContext)
-    {
-        ArgumentNullException.ThrowIfNull(dbContext);
-        _dbContext = dbContext;
-    }
-
     /// <summary>
     /// Get all habits for the current user.
     /// </summary>
@@ -36,10 +21,14 @@ public class HabitsController : ControllerBase
     [Produces("application/json", "application/hal+json")]
     public async Task<IActionResult> GetHabits([FromQuery] HabitsQueryParameters? queryParameters, CancellationToken cancellationToken)
     {
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        if (error != null)
+            return error;
+
         var parameters = queryParameters ?? new HabitsQueryParameters();
 
-        var result = await _dbContext.Habits
-            .Where(h => h.UserId == _currentUserId)
+        var result = await ApplicationDbContext.Habits
+            .Where(h => h.UserId == currentUser!.Id)
             .ApplyFiltering(parameters)
             .ApplySorting(parameters.Sort)
             .ToPagedResultAsync(parameters.PageNumber, parameters.PageSize, HabitDto.FromEntity, cancellationToken);
@@ -63,8 +52,12 @@ public class HabitsController : ControllerBase
     [Produces("application/json", "application/hal+json")]
     public async Task<IActionResult> GetHabit(Guid habitId, CancellationToken cancellationToken)
     {
-        var habit = await _dbContext.Habits.FirstOrDefaultAsync(
-            h => h.Id == habitId && h.UserId == _currentUserId,
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        if (error != null)
+            return error;
+
+        var habit = await ApplicationDbContext.Habits.FirstOrDefaultAsync(
+            h => h.Id == habitId && h.UserId == currentUser!.Id,
             cancellationToken);
 
         if (habit == null)
@@ -72,8 +65,8 @@ public class HabitsController : ControllerBase
             return NotFound();
         }
 
-        var tags = await _dbContext.Tags
-            .Where(t => t.UserId == _currentUserId && t.HabitTags.Any(ht => ht.HabitId == habitId))
+        var tags = await ApplicationDbContext.Tags
+            .Where(t => t.UserId == currentUser!.Id && t.HabitTags.Any(ht => ht.HabitId == habitId))
             .OrderBy(t => t.Name)
             .ToListAsync(cancellationToken);
 
@@ -98,6 +91,9 @@ public class HabitsController : ControllerBase
     [Produces("application/json", "application/hal+json")]
     public async Task<IActionResult> CreateHabit([FromBody] CreateHabitDto request, CancellationToken cancellationToken)
     {
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        if (error != null)
+            return error;
         ArgumentNullException.ThrowIfNull(request);
 
         if (!ModelState.IsValid)
@@ -105,10 +101,10 @@ public class HabitsController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var habit = request.ToHabit(_currentUserId);
+        var habit = request.ToHabit(currentUser!.Id);
 
-        _dbContext.Habits.Add(habit);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        ApplicationDbContext.Habits.Add(habit);
+        await ApplicationDbContext.SaveChangesAsync(cancellationToken);
 
         var habitDto = HabitDto.FromEntity(habit);
 
@@ -133,13 +129,17 @@ public class HabitsController : ControllerBase
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        if (error != null)
+            return error;
+
         if (!ModelState.IsValid)
         {
             return ValidationProblem(ModelState);
         }
 
-        var habit = await _dbContext.Habits.FirstOrDefaultAsync(
-            h => h.Id == habitId && h.UserId == _currentUserId,
+        var habit = await ApplicationDbContext.Habits.FirstOrDefaultAsync(
+            h => h.Id == habitId && h.UserId == currentUser!.Id,
             cancellationToken);
 
         if (habit == null)
@@ -150,7 +150,7 @@ public class HabitsController : ControllerBase
         // Apply full replacement via DTO mapping
         request.ApplyToHabit(habit);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await ApplicationDbContext.SaveChangesAsync(cancellationToken);
         return Ok(HabitDto.FromEntity(habit));
     }
 
@@ -165,13 +165,17 @@ public class HabitsController : ControllerBase
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        if (error != null)
+            return error;
+
         if (!ModelState.IsValid)
         {
             return ValidationProblem(ModelState);
         }
 
-        var habit = await _dbContext.Habits.FirstOrDefaultAsync(
-            h => h.Id == habitId && h.UserId == _currentUserId,
+        var habit = await ApplicationDbContext.Habits.FirstOrDefaultAsync(
+            h => h.Id == habitId && h.UserId == currentUser!.Id,
             cancellationToken);
 
         if (habit == null)
@@ -182,7 +186,7 @@ public class HabitsController : ControllerBase
         // Apply selective updates via DTO mapping
         request.ApplyToHabit(habit);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await ApplicationDbContext.SaveChangesAsync(cancellationToken);
         return Ok(HabitDto.FromEntity(habit));
     }
 
@@ -194,8 +198,12 @@ public class HabitsController : ControllerBase
     [HttpDelete("{habitId:guid}")]
     public async Task<IActionResult> DeleteHabit(Guid habitId, CancellationToken cancellationToken)
     {
-        var habit = await _dbContext.Habits.FirstOrDefaultAsync(
-            h => h.Id == habitId && h.UserId == _currentUserId,
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        if (error != null)
+            return error;
+
+        var habit = await ApplicationDbContext.Habits.FirstOrDefaultAsync(
+            h => h.Id == habitId && h.UserId == currentUser!.Id,
             cancellationToken);
 
         if (habit == null)
@@ -205,7 +213,7 @@ public class HabitsController : ControllerBase
 
         // Soft delete via domain method
         habit.Archive();
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await ApplicationDbContext.SaveChangesAsync(cancellationToken);
 
         return NoContent();
     }
@@ -221,8 +229,12 @@ public class HabitsController : ControllerBase
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var habit = await _dbContext.Habits.FirstOrDefaultAsync(
-            h => h.Id == habitId && h.UserId == _currentUserId,
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        if (error != null)
+            return error;
+
+        var habit = await ApplicationDbContext.Habits.FirstOrDefaultAsync(
+            h => h.Id == habitId && h.UserId == currentUser!.Id,
             cancellationToken);
 
         if (habit == null)
@@ -233,19 +245,19 @@ public class HabitsController : ControllerBase
         if (request.TagIds == null || request.TagIds.Count == 0)
         {
             // Clear all tags if empty list provided
-            var existingJoins = await _dbContext.HabitTags
+            var existingJoins = await ApplicationDbContext.HabitTags
                 .Where(ht => ht.HabitId == habitId)
                 .ToListAsync(cancellationToken);
 
-            _dbContext.HabitTags.RemoveRange(existingJoins);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            ApplicationDbContext.HabitTags.RemoveRange(existingJoins);
+            await ApplicationDbContext.SaveChangesAsync(cancellationToken);
             return Ok(new List<TagDto>());
         }
 
         // Verify all provided tag IDs belong to current user
         var tagIds = request.TagIds.Distinct().ToList();
-        var userTags = await _dbContext.Tags
-            .Where(t => t.UserId == _currentUserId && tagIds.Contains(t.Id))
+        var userTags = await ApplicationDbContext.Tags
+            .Where(t => t.UserId == currentUser!.Id && tagIds.Contains(t.Id))
             .ToListAsync(cancellationToken);
 
         if (userTags.Count != tagIds.Count)
@@ -254,23 +266,23 @@ public class HabitsController : ControllerBase
         }
 
         // Remove existing joins for this habit
-        var existingJoins2 = await _dbContext.HabitTags
+        var existingJoins2 = await ApplicationDbContext.HabitTags
             .Where(ht => ht.HabitId == habitId)
             .ToListAsync(cancellationToken);
 
-        _dbContext.HabitTags.RemoveRange(existingJoins2);
+        ApplicationDbContext.HabitTags.RemoveRange(existingJoins2);
 
         // Add new joins
         foreach (var tagId in tagIds)
         {
             var habitTag = new HabitTag(habitId, tagId);
-            _dbContext.HabitTags.Add(habitTag);
+            ApplicationDbContext.HabitTags.Add(habitTag);
         }
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await ApplicationDbContext.SaveChangesAsync(cancellationToken);
 
         // Return the updated list of tags
-        var tagsForHabit = await _dbContext.Tags
+        var tagsForHabit = await ApplicationDbContext.Tags
             .Where(t => tagIds.Contains(t.Id))
             .ToListAsync(cancellationToken);
 
@@ -286,8 +298,12 @@ public class HabitsController : ControllerBase
     [HttpDelete("{habitId:guid}/tags/{tagId:guid}")]
     public async Task<IActionResult> RemoveTagFromHabit(Guid habitId, Guid tagId, CancellationToken cancellationToken)
     {
-        var habit = await _dbContext.Habits.FirstOrDefaultAsync(
-            h => h.Id == habitId && h.UserId == _currentUserId,
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        if (error != null)
+            return error;
+
+        var habit = await ApplicationDbContext.Habits.FirstOrDefaultAsync(
+            h => h.Id == habitId && h.UserId == currentUser!.Id,
             cancellationToken);
 
         if (habit == null)
@@ -295,7 +311,7 @@ public class HabitsController : ControllerBase
             return NotFound();
         }
 
-        var habitTag = await _dbContext.HabitTags.FirstOrDefaultAsync(
+        var habitTag = await ApplicationDbContext.HabitTags.FirstOrDefaultAsync(
             ht => ht.HabitId == habitId && ht.TagId == tagId,
             cancellationToken);
 
@@ -305,8 +321,8 @@ public class HabitsController : ControllerBase
         }
 
         // Verify the tag belongs to the current user (security check)
-        var tag = await _dbContext.Tags.FirstOrDefaultAsync(
-            t => t.Id == tagId && t.UserId == _currentUserId,
+        var tag = await ApplicationDbContext.Tags.FirstOrDefaultAsync(
+            t => t.Id == tagId && t.UserId == currentUser!.Id,
             cancellationToken);
 
         if (tag == null)
@@ -314,8 +330,8 @@ public class HabitsController : ControllerBase
             return NotFound();
         }
 
-        _dbContext.HabitTags.Remove(habitTag);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        ApplicationDbContext.HabitTags.Remove(habitTag);
+        await ApplicationDbContext.SaveChangesAsync(cancellationToken);
 
         return NoContent();
     }
@@ -403,24 +419,23 @@ public class HabitsController : ControllerBase
 
     private List<HateoasLink> BuildDetailLinks(Guid habitId, bool isArchived)
     {
-        var links = new List<HateoasLink>();
-
-        links.Add(new HateoasLink(
-            Href: CreateRouteLink(nameof(GetHabit), new { habitId }),
-            Rel: "self",
-            Method: "GET"));
-
-        links.Add(new HateoasLink(
-            Href: CreateRouteLink(nameof(UpdateHabit), new { habitId }),
-            Rel: "update",
-            Method: "PUT",
-            Title: "Replace this habit"));
-
-        links.Add(new HateoasLink(
-            Href: CreateRouteLink(nameof(PatchHabit), new { habitId }),
-            Rel: "patch",
-            Method: "PATCH",
-            Title: "Partially update this habit"));
+        List<HateoasLink> links =
+        [
+            new HateoasLink(
+                Href: CreateRouteLink(nameof(GetHabit), new { habitId }),
+                Rel: "self",
+                Method: "GET"),
+            new HateoasLink(
+                Href: CreateRouteLink(nameof(UpdateHabit), new { habitId }),
+                Rel: "update",
+                Method: "PUT",
+                Title: "Replace this habit"),
+            new HateoasLink(
+                Href: CreateRouteLink(nameof(PatchHabit), new { habitId }),
+                Rel: "patch",
+                Method: "PATCH",
+                Title: "Partially update this habit"),
+        ];
 
         if (!isArchived)
         {
@@ -446,36 +461,28 @@ public class HabitsController : ControllerBase
         return links;
     }
 
-    private List<HateoasLink> BuildCreatedLinks(Guid habitId)
-    {
-        var links = new List<HateoasLink>();
-
-        links.Add(new HateoasLink(
+    private List<HateoasLink> BuildCreatedLinks(Guid habitId) =>
+    [
+        new HateoasLink(
             Href: CreateRouteLink(nameof(GetHabit), new { habitId }),
             Rel: "self",
             Method: "GET",
-            Title: "The created habit"));
-
-        links.Add(new HateoasLink(
+            Title: "The created habit"),
+        new HateoasLink(
             Href: CreateRouteLink(nameof(UpdateHabit), new { habitId }),
             Rel: "update",
             Method: "PUT",
-            Title: "Replace this habit"));
-
-        links.Add(new HateoasLink(
+            Title: "Replace this habit"),
+        new HateoasLink(
             Href: CreateRouteLink(nameof(GetHabits), null),
             Rel: "all",
             Method: "GET",
-            Title: "List all habits"));
+            Title: "List all habits"),
+    ];
 
-        return links;
-    }
-
-    private string CreateRouteLink(string actionName, object? routeValues)
-    {
-        var link = Url.Action(actionName, values: routeValues);
-        return link ?? throw new InvalidOperationException($"Unable to generate route link for action '{actionName}'.");
-    }
+    private string CreateRouteLink(string actionName, object? routeValues) =>
+        Url.Action(actionName, values: routeValues) 
+            ?? throw new InvalidOperationException($"Unable to generate route link for action '{actionName}'.");
 
     private bool AcceptsHalJson() => Request.GetTypedHeaders().Accept switch
     {
