@@ -9,7 +9,7 @@ namespace HabitTracker.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/users")]
-public sealed class UserController(ApplicationDbContext applicationDbContext) : ControllerBase
+public sealed class UsersController(ApplicationDbContext applicationDbContext) : ControllerBase
 {
     [HttpGet("{id:guid}")]
     public IActionResult GetUserById(Guid id)
