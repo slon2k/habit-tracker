@@ -1,4 +1,4 @@
-namespace HabitTracker.Api.Dtos;
+namespace HabitTracker.Api.Dtos.Users;
 
 public sealed record UserRolesDto(
     Guid UserId,

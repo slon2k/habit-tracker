@@ -1,4 +1,4 @@
-using HabitTracker.Api.Dtos;
+using HabitTracker.Api.Dtos.Common;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 

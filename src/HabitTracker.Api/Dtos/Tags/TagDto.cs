@@ -1,4 +1,4 @@
-namespace HabitTracker.Api.Dtos;
+namespace HabitTracker.Api.Dtos.Tags;
 
 using HabitTracker.Api.Entities;
 

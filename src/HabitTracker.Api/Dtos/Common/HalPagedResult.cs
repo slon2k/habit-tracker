@@ -1,4 +1,4 @@
-namespace HabitTracker.Api.Dtos;
+namespace HabitTracker.Api.Dtos.Common;
 
 /// <summary>
 /// Paginated result with HATEOAS links for navigation and actions.
@@ -20,14 +20,4 @@ public record HalPagedResult<T>(
     /// Gets the total number of pages.
     /// </summary>
     public int TotalPages => (TotalCount + PageSize - 1) / PageSize;
-
-    /// <summary>
-    /// Gets a value indicating whether there are more pages after the current page.
-    /// </summary>
-    public bool HasNextPage => PageNumber < TotalPages;
-
-    /// <summary>
-    /// Gets a value indicating whether there are pages before the current page.
-    /// </summary>
-    public bool HasPreviousPage => PageNumber > 1;
 }

@@ -1,4 +1,4 @@
-namespace HabitTracker.Api.Dtos;
+namespace HabitTracker.Api.Dtos.Models;
 
 /// <summary>
 /// Represents a target value and unit for measurable habits.

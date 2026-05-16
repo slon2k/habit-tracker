@@ -1,4 +1,4 @@
-namespace HabitTracker.Api.Dtos;
+namespace HabitTracker.Api.Dtos.Common;
 
 /// <summary>
 /// Generic wrapper for paginated API responses.
@@ -18,14 +18,4 @@ public record PagedResult<T>(
     /// Gets the total number of pages.
     /// </summary>
     public int TotalPages => (TotalCount + PageSize - 1) / PageSize;
-
-    /// <summary>
-    /// Gets a value indicating whether there are more pages after the current page.
-    /// </summary>
-    public bool HasNextPage => PageNumber < TotalPages;
-
-    /// <summary>
-    /// Gets a value indicating whether there are pages before the current page.
-    /// </summary>
-    public bool HasPreviousPage => PageNumber > 1;
 }

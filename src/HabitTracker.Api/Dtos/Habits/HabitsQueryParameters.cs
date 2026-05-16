@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using HabitTracker.Api.Entities;
 
-namespace HabitTracker.Api.Dtos;
+namespace HabitTracker.Api.Dtos.Habits;
 
 /// <summary>
 /// Query parameters for filtering habits in GET /api/habits endpoint.

@@ -1,5 +1,5 @@
 using HabitTracker.Api.Data;
-using HabitTracker.Api.Dtos;
+using HabitTracker.Api.Dtos.Users;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

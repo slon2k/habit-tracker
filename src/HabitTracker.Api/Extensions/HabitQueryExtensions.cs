@@ -1,4 +1,4 @@
-using HabitTracker.Api.Dtos;
+using HabitTracker.Api.Dtos.Habits;
 using HabitTracker.Api.Entities;
 
 namespace HabitTracker.Api.Extensions;

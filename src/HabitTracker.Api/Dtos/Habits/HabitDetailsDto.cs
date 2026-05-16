@@ -1,5 +1,7 @@
-namespace HabitTracker.Api.Dtos;
+namespace HabitTracker.Api.Dtos.Habits;
 
+using HabitTracker.Api.Dtos.Models;
+using HabitTracker.Api.Dtos.Tags;
 using HabitTracker.Api.Entities;
 
 /// <summary>

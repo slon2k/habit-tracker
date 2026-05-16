@@ -1,4 +1,4 @@
-namespace HabitTracker.Api.Dtos;
+namespace HabitTracker.Api.Dtos.Common;
 
 /// <summary>
 /// Generic wrapper for HAL+JSON API responses, containing data and HATEOAS links.

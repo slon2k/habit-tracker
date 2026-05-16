@@ -1,4 +1,4 @@
-namespace HabitTracker.Api.Dtos;
+namespace HabitTracker.Api.Dtos.Habits;
 
 /// <summary>
 /// Request DTO for upserting tags to a habit.

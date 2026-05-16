@@ -1,4 +1,4 @@
-namespace HabitTracker.Api.Dtos;
+namespace HabitTracker.Api.Dtos.Common;
 
 /// <summary>
 /// Represents a hyperlink in HAL+JSON format.

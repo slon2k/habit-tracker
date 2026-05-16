@@ -1,4 +1,4 @@
-namespace HabitTracker.Api.Dtos;
+namespace HabitTracker.Api.Dtos.Models;
 
 /// <summary>
 /// Represents progress towards a milestone.

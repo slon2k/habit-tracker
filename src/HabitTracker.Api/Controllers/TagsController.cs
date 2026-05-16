@@ -1,5 +1,6 @@
 using HabitTracker.Api.Data;
-using HabitTracker.Api.Dtos;
+using HabitTracker.Api.Dtos.Common;
+using HabitTracker.Api.Dtos.Tags;
 using HabitTracker.Api.Entities;
 
 using Microsoft.AspNetCore.Authorization;

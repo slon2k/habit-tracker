@@ -1,7 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using HabitTracker.Api.Dtos.Models;
 using HabitTracker.Api.Entities;
 
-namespace HabitTracker.Api.Dtos;
+namespace HabitTracker.Api.Dtos.Habits;
 
 /// <summary>
 /// Request model for creating a new habit.

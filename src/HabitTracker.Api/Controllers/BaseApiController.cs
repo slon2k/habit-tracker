@@ -1,4 +1,5 @@
 using HabitTracker.Api.Data;
+using HabitTracker.Api.Dtos.Common;
 using HabitTracker.Api.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
