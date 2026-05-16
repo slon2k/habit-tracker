@@ -52,7 +52,7 @@ public sealed class AuthController(
         }
 
 
-        return CreatedAtAction(null, new { id = appUser.Id }, new { appUser.Id });
+        return CreatedAtRoute("GetUserById", new { id = appUser.Id }, new { appUser.Id });
     }
 
     [HttpPost("login")]
