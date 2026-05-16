@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using HabitTracker.Api.Data.Configurations;
 using HabitTracker.Api.Entities;
 
 namespace HabitTracker.Api.Data;
@@ -25,6 +24,6 @@ public sealed class ApplicationIdentityDbContext(DbContextOptions<ApplicationIde
         builder.Entity<IdentityUserToken<string>>().ToTable("asp_net_user_tokens");
         builder.Entity<IdentityUserLogin<string>>().ToTable("asp_net_user_logins");
 
-        builder.ApplyConfiguration(new RefreshTokenConfiguration());
+        builder.ApplyConfigurationsFromAssembly(typeof(ApplicationIdentityDbContext).Assembly);
     }
 }
