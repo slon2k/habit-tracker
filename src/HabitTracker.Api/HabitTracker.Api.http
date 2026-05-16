@@ -1,9 +1,10 @@
 # For HTTPS locally run with: dotnet run --launch-profile https
 # For Docker: https://localhost:5001
-@HabitTracker.Api_HostAddress = http://localhost:5000
+@HabitTracker.Api_HostAddress = https://localhost:5001
 @habitId = 1918e441-f48a-4961-afca-bcf1a09777c3
-@accessToken =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwOTY0YWNmNy0xMmFiLTRiNWUtOTBlMy0wMTEwMThiMDMxYmUiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjA5NjRhY2Y3LTEyYWItNGI1ZS05MGUzLTAxMTAxOGIwMzFiZSIsImVtYWlsIjoiVVNFUkBIQUJJVFRSQUNLRVIuQ09NIiwiYXBwX3VzZXJfaWQiOiJiNzg0Y2Y4Mi1kN2UzLTRlNjUtYmVhYy01OWI0MGJhYWRhMjEiLCJqdGkiOiJiN2M5OWMxZS02YzlkLTQ3M2QtOTA0Mi1iNzA2YzZiNjRlMTAiLCJleHAiOjE3Nzg4NjgyNjYsImlzcyI6IkhhYml0VHJhY2tlci5BcGkiLCJhdWQiOiJIYWJpdFRyYWNrZXIuQ2xpZW50In0.C46RF8MZWoROGUF8KrgPz9qzV3IQ0k5HUrq7CeRby0w
-@refreshToken =h7N6wECcXlQ92mvkB9QfwwnIjxLyDqONoXmHg5MQYGJDtkks5x1A2TWxOhHkhlp62OgzQtbcTvUUzEwve+bBGA==
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NzNhZjg0Mi1mMmY4LTRkMWItYjA5MC0yZDQ2MWU2N2NiMzUiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6Ijc3M2FmODQyLWYyZjgtNGQxYi1iMDkwLTJkNDYxZTY3Y2IzNSIsImVtYWlsIjoiVVNFUjFASEFCSVRUUkFDS0VSLkNPTSIsImFwcF91c2VyX2lkIjoiZmJiNGY5MTUtM2FiYy00MjRiLTg3ZmQtOWFhOWIwMTZhOWQ1IiwianRpIjoiMjc1YWRkOGEtMWQwNy00YWUxLWFmYTktMzE2MmY5YTc0ZTNjIiwiZXhwIjoxNzc4OTI2MzYxLCJpc3MiOiJodHRwczovL2xvY2FsaG9zdDo1MDAxIiwiYXVkIjoiSGFiaXRUcmFja2VyLkNsaWVudCJ9.xRvQzYTk8wcdizlOYug25NW58KYZ_iL0HrNbHkW29Y8
+@refreshToken = TFtf0QngXSmFMfy4Dy9weWQhU8xUAqoqG71N7I3/wJG3L/zmZsLb6lT3tobOTEbQWGPZHR0PapV5mgr0LfMR1A==
+
 
 ### Health Check
 GET {{HabitTracker.Api_HostAddress}}/health
@@ -148,7 +149,7 @@ Content-Type: application/json
 
 {
   "name": "First User",
-  "email": "user@habittracker.com",
+  "email": "user1@habittracker.com",
   "password": "Password123!",
   "confirmPassword": "Password123!"
 }
@@ -158,7 +159,7 @@ POST {{HabitTracker.Api_HostAddress}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "user@habittracker.com",
+  "email": "user1@habittracker.com",
   "password": "Password123!"
 }
 
@@ -176,3 +177,4 @@ Content-Type: application/json
 GET {{HabitTracker.Api_HostAddress}}/api/users/me
 Accept: application/json
 Authorization: Bearer {{accessToken}}
+

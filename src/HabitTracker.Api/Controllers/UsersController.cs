@@ -3,6 +3,7 @@ using HabitTracker.Api.Dtos;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace HabitTracker.Api.Controllers;
 
@@ -27,14 +28,32 @@ public sealed class UsersController(ApplicationDbContext applicationDbContext) :
     [HttpGet("me")]
     public IActionResult GetCurrentUser()
     {
-        var identityId = HttpContext.User?.FindFirst("sub")?.Value;
-
-        if (identityId == null)
+        if (HttpContext.User is not ClaimsPrincipal principal)
         {
             return Unauthorized();
         }
 
-        var user = applicationDbContext.Users.FirstOrDefault(u => u.Id.ToString() == identityId);
+        var appUserIdClaim = principal.FindFirstValue("app_user_id");
+
+        if (Guid.TryParse(appUserIdClaim, out var appUserId))
+        {
+            var userByAppId = applicationDbContext.Users.FirstOrDefault(u => u.Id == appUserId);
+
+            if (userByAppId != null)
+            {
+                return Ok(UserDto.FromEntity(userByAppId));
+            }
+        }
+
+        var identityId = principal.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? principal.FindFirstValue("sub");
+
+        if (string.IsNullOrWhiteSpace(identityId))
+        {
+            return Unauthorized();
+        }
+
+        var user = applicationDbContext.Users.FirstOrDefault(u => u.IdentityId == identityId);
 
         if (user == null)
         {
