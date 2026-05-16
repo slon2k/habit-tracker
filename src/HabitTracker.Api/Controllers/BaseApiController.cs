@@ -64,4 +64,16 @@ public abstract class BaseApiController(ApplicationDbContext applicationDbContex
         }
         return (user, null);
     }
+
+    protected string CreateRouteLink(string actionName, object? routeValues) =>
+        Url.Action(actionName, values: routeValues) 
+            ?? throw new InvalidOperationException($"Unable to generate route link for action '{actionName}'.");
+
+    protected bool AcceptsHalJson() => Request.GetTypedHeaders().Accept switch
+    {
+        null => false,
+        { Count: 0 } => false,
+        var acceptedMediaTypes => acceptedMediaTypes.Any(mediaType =>
+            string.Equals(mediaType.MediaType.Value, "application/hal+json", StringComparison.OrdinalIgnoreCase))
+    };
 }

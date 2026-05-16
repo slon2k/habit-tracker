@@ -479,16 +479,4 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
             Method: "GET",
             Title: "List all habits"),
     ];
-
-    private string CreateRouteLink(string actionName, object? routeValues) =>
-        Url.Action(actionName, values: routeValues) 
-            ?? throw new InvalidOperationException($"Unable to generate route link for action '{actionName}'.");
-
-    private bool AcceptsHalJson() => Request.GetTypedHeaders().Accept switch
-    {
-        null => false,
-        { Count: 0 } => false,
-        var acceptedMediaTypes => acceptedMediaTypes.Any(mediaType =>
-            string.Equals(mediaType.MediaType.Value, "application/hal+json", StringComparison.OrdinalIgnoreCase))
-    };
 }
