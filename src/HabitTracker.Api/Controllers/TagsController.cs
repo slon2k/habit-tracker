@@ -19,7 +19,7 @@ public class TagsController(ApplicationDbContext dbContext) : BaseApiController(
     [HttpGet]
     public async Task<IActionResult> GetTags(CancellationToken cancellationToken)
     {
-        var currentUser = await GetCurrentUserAsync();
+        var currentUser = await GetCurrentUserAsync(cancellationToken);
         if (currentUser == null)
             return Unauthorized();
 
@@ -40,7 +40,7 @@ public class TagsController(ApplicationDbContext dbContext) : BaseApiController(
     [HttpGet("{tagId:guid}")]
     public async Task<IActionResult> GetTag(Guid tagId, CancellationToken cancellationToken)
     {
-        var currentUser = await GetCurrentUserAsync();
+        var currentUser = await GetCurrentUserAsync(cancellationToken);
         if (currentUser == null)
             return Unauthorized();
 
@@ -61,7 +61,7 @@ public class TagsController(ApplicationDbContext dbContext) : BaseApiController(
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var currentUser = await GetCurrentUserAsync();
+        var currentUser = await GetCurrentUserAsync(cancellationToken);
         if (currentUser == null)
             return Unauthorized();
 
@@ -101,7 +101,7 @@ public class TagsController(ApplicationDbContext dbContext) : BaseApiController(
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);
         if (error != null)
             return error;
 
@@ -144,7 +144,7 @@ public class TagsController(ApplicationDbContext dbContext) : BaseApiController(
     [HttpDelete("{tagId:guid}")]
     public async Task<IActionResult> DeleteTag(Guid tagId, CancellationToken cancellationToken)
     {
-        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);
         if (error != null)
             return error;
 

@@ -21,7 +21,7 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
     [Produces("application/json", "application/hal+json")]
     public async Task<IActionResult> GetHabits([FromQuery] HabitsQueryParameters? queryParameters, CancellationToken cancellationToken)
     {
-        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);
         if (error != null)
             return error;
 
@@ -52,7 +52,7 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
     [Produces("application/json", "application/hal+json")]
     public async Task<IActionResult> GetHabit(Guid habitId, CancellationToken cancellationToken)
     {
-        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);
         if (error != null)
             return error;
 
@@ -91,7 +91,7 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
     [Produces("application/json", "application/hal+json")]
     public async Task<IActionResult> CreateHabit([FromBody] CreateHabitDto request, CancellationToken cancellationToken)
     {
-        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);
         if (error != null)
             return error;
         ArgumentNullException.ThrowIfNull(request);
@@ -129,7 +129,7 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);
         if (error != null)
             return error;
 
@@ -161,11 +161,11 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
     /// <param name="request">The partial update request.</param>
     /// <returns>The updated habit as a DTO, or 404 if not found or not owned by the user.</returns>
     [HttpPatch("{habitId:guid}")]
-    public async Task<IActionResult> PatchHabit(Guid habitId, [FromBody] PartialUpdateHabitDto request, CancellationToken cancellationToken)
+    public async Task<IActionResult> PatchHabit(Guid habitId, [FromBody] PartialUpdateHabitDto request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);
         if (error != null)
             return error;
 
@@ -196,9 +196,9 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
     /// <param name="habitId">The habit ID.</param>
     /// <returns>204 No Content on success, 404 if not found or not owned by the user.</returns>
     [HttpDelete("{habitId:guid}")]
-    public async Task<IActionResult> DeleteHabit(Guid habitId, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteHabit(Guid habitId, CancellationToken cancellationToken = default)
     {
-        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);
         if (error != null)
             return error;
 
@@ -225,11 +225,11 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
     /// <param name="request">Request containing list of tag IDs to associate with the habit.</param>
     /// <returns>200 OK with the list of tags now associated with the habit, or 404 if habit not found.</returns>
     [HttpPut("{habitId:guid}/tags")]
-    public async Task<IActionResult> UpsertHabitTags(Guid habitId, [FromBody] UpsertHabitTagsRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> UpsertHabitTags(Guid habitId, [FromBody] UpsertHabitTagsRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);
         if (error != null)
             return error;
 
@@ -296,9 +296,9 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
     /// <param name="tagId">The tag ID to remove.</param>
     /// <returns>204 No Content on success, or 404 if habit or relationship not found or not owned by the user.</returns>
     [HttpDelete("{habitId:guid}/tags/{tagId:guid}")]
-    public async Task<IActionResult> RemoveTagFromHabit(Guid habitId, Guid tagId, CancellationToken cancellationToken)
+    public async Task<IActionResult> RemoveTagFromHabit(Guid habitId, Guid tagId, CancellationToken cancellationToken = default)
     {
-        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync();
+        var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);
         if (error != null)
             return error;
 

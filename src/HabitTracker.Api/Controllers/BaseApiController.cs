@@ -1,6 +1,8 @@
 using HabitTracker.Api.Data;
 using HabitTracker.Api.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
 using System.Security.Claims;
 
 namespace HabitTracker.Api.Controllers;
@@ -17,8 +19,9 @@ public abstract class BaseApiController(ApplicationDbContext applicationDbContex
     /// Resolves the current authenticated user from JWT claims.
     /// Tries multiple claim types to handle different JWT claim mapping strategies.
     /// </summary>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The current user entity, or null if user claims are invalid or user not found in database.</returns>
-    protected async Task<User?> GetCurrentUserAsync()
+    protected async Task<User?> GetCurrentUserAsync(CancellationToken cancellationToken = default)
     {
         if (HttpContext.User is not ClaimsPrincipal principal)
         {
@@ -29,7 +32,7 @@ public abstract class BaseApiController(ApplicationDbContext applicationDbContex
         var appUserIdClaim = principal.FindFirstValue("app_user_id");
         if (Guid.TryParse(appUserIdClaim, out var appUserId))
         {
-            var userByAppId = await ApplicationDbContext.Users.FindAsync(appUserId);
+            var userByAppId = await ApplicationDbContext.Users.FindAsync([appUserId], cancellationToken);
             if (userByAppId != null)
             {
                 return userByAppId;
@@ -46,7 +49,7 @@ public abstract class BaseApiController(ApplicationDbContext applicationDbContex
             return null;
         }
 
-        var userByIdentityId = ApplicationDbContext.Users.FirstOrDefault(u => u.IdentityId == identityId);
+        var userByIdentityId = await ApplicationDbContext.Users.FirstOrDefaultAsync(u => u.IdentityId == identityId, cancellationToken);
         return userByIdentityId;
     }
 
@@ -55,9 +58,9 @@ public abstract class BaseApiController(ApplicationDbContext applicationDbContex
     /// Useful for quick inline authorization checks in controller actions.
     /// </summary>
     /// <returns>The current user entity, or an Unauthorized IActionResult if resolution fails.</returns>
-    protected async Task<(User? user, IActionResult? error)> GetCurrentUserOrUnauthorizedAsync()
+    protected async Task<(User? user, IActionResult? error)> GetCurrentUserOrUnauthorizedAsync(CancellationToken cancellationToken = default)
     {
-        var user = await GetCurrentUserAsync();
+        var user = await GetCurrentUserAsync(cancellationToken);
         if (user == null)
         {
             return (null, Unauthorized());

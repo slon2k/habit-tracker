@@ -11,18 +11,18 @@ namespace HabitTracker.Api.Controllers;
 public sealed class UsersController(ApplicationDbContext applicationDbContext) : BaseApiController(applicationDbContext)
 {
     [HttpGet("{id:guid}", Name = "GetUserById")]
-    public IActionResult GetUserById(Guid id)
+    public async Task<IActionResult> GetUserById(Guid id, CancellationToken cancellationToken = default)
     {
-        var user = ApplicationDbContext.Users.FirstOrDefault(u => u.Id == id);
+        var user = await ApplicationDbContext.Users.FindAsync([id], cancellationToken);
 
         return user == null ? NotFound() : Ok(UserDto.FromEntity(user));
     }
 
     [HttpGet("me")]
-    public async Task<IActionResult> GetCurrentUser()
+    public async Task<IActionResult> GetCurrentUser(CancellationToken cancellationToken = default)
     {
-        var user = await GetCurrentUserAsync();
-        
+        var user = await GetCurrentUserAsync(cancellationToken);
+
         return user == null ? Unauthorized() : Ok(UserDto.FromEntity(user));
     }
 }
