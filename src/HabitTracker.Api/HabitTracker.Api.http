@@ -2,7 +2,7 @@
 # For Docker: https://localhost:5001
 @HabitTracker.Api_HostAddress = http://localhost:5000
 @habitId = 1918e441-f48a-4961-afca-bcf1a09777c3
-@accessToken =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwOTY0YWNmNy0xMmFiLTRiNWUtOTBlMy0wMTEwMThiMDMxYmUiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjA5NjRhY2Y3LTEyYWItNGI1ZS05MGUzLTAxMTAxOGIwMzFiZSIsImVtYWlsIjoiVVNFUkBIQUJJVFRSQUNLRVIuQ09NIiwiYXBwX3VzZXJfaWQiOiJiNzg0Y2Y4Mi1kN2UzLTRlNjUtYmVhYy01OWI0MGJhYWRhMjEiLCJqdGkiOiI3YmVjMmM2MC1lYTljLTQyNjItOGI4Yi1jNjg4NDFlOWJlNzYiLCJleHAiOjE3Nzg4Njc5MTUsImlzcyI6IkhhYml0VHJhY2tlci5BcGkiLCJhdWQiOiJIYWJpdFRyYWNrZXIuQ2xpZW50In0.cnGWO4IFAR0AhTu7RM_H6HngyBSNt79QYiLN1RPUv1w
+@accessToken =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwOTY0YWNmNy0xMmFiLTRiNWUtOTBlMy0wMTEwMThiMDMxYmUiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjA5NjRhY2Y3LTEyYWItNGI1ZS05MGUzLTAxMTAxOGIwMzFiZSIsImVtYWlsIjoiVVNFUkBIQUJJVFRSQUNLRVIuQ09NIiwiYXBwX3VzZXJfaWQiOiJiNzg0Y2Y4Mi1kN2UzLTRlNjUtYmVhYy01OWI0MGJhYWRhMjEiLCJqdGkiOiJiN2M5OWMxZS02YzlkLTQ3M2QtOTA0Mi1iNzA2YzZiNjRlMTAiLCJleHAiOjE3Nzg4NjgyNjYsImlzcyI6IkhhYml0VHJhY2tlci5BcGkiLCJhdWQiOiJIYWJpdFRyYWNrZXIuQ2xpZW50In0.C46RF8MZWoROGUF8KrgPz9qzV3IQ0k5HUrq7CeRby0w
 @refreshToken =h7N6wECcXlQ92mvkB9QfwwnIjxLyDqONoXmHg5MQYGJDtkks5x1A2TWxOhHkhlp62OgzQtbcTvUUzEwve+bBGA==
 
 ### Health Check
@@ -16,43 +16,53 @@ Accept: application/hal+json
 
 ### Get All Habits - With Pagination (Page 1, 5 items per page)
 GET {{HabitTracker.Api_HostAddress}}/api/habits?pageNumber=1&pageSize=5
+Authorization: Bearer {{accessToken}}
 Accept: application/json
 
 ### Get All Habits - Paginated with Sort (includes HATEOAS links: self, first, last, next, prev, create)
 GET {{HabitTracker.Api_HostAddress}}/api/habits?sort=name:asc&pageNumber=1&pageSize=10
+Authorization: Bearer {{accessToken}}
 Accept: application/hal+json
 # Accept: application/json
 
 ### Get Habits - Search
 GET {{HabitTracker.Api_HostAddress}}/api/habits?search=Run
+Authorization: Bearer {{accessToken}}
 Accept: application/json
 
 ### Get Habits - Filter by Type
 GET {{HabitTracker.Api_HostAddress}}/api/habits?type=Binary
+Authorization: Bearer {{accessToken}}
 Accept: application/json
 
 ### Get Habits - Filter by Status
 GET {{HabitTracker.Api_HostAddress}}/api/habits?status=Ongoing
+Authorization: Bearer {{accessToken}}
 Accept: application/json
 
 ### Get Habits - Combined Filters
 GET {{HabitTracker.Api_HostAddress}}/api/habits?search=Read&type=Measurable&status=Ongoing
+Authorization: Bearer {{accessToken}}
 Accept: application/json
 
 ### Get Habits - Sort by Status then Created Date
 GET {{HabitTracker.Api_HostAddress}}/api/habits?sort=status:asc,createdAtUtc:desc
+Authorization: Bearer {{accessToken}}
 Accept: application/json
 
 ### Get Habits - Sort by Name
 GET {{HabitTracker.Api_HostAddress}}/api/habits?sort=name:asc
+Authorization: Bearer {{accessToken}}
 Accept: application/json
 
 ### Get Habits - Combined Filters and Sort
 GET {{HabitTracker.Api_HostAddress}}/api/habits?status=Ongoing&sort=type:asc,name:asc,createdAtUtc:desc
+Authorization: Bearer {{accessToken}}
 Accept: application/json
 
 ### Create a New Habit (Binary - Daily Exercise)
 POST {{HabitTracker.Api_HostAddress}}/api/habits
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 Accept: application/hal+json
 # Accept: application/json
@@ -70,6 +80,7 @@ Accept: application/hal+json
 
 ### Create a New Habit (Measurable - Read Pages)
 POST {{HabitTracker.Api_HostAddress}}/api/habits
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 Accept: application/hal+json
 # Accept: application/json
@@ -91,10 +102,12 @@ Accept: application/hal+json
 
 ### Get Single Habit (with HATEOAS links: self, update, patch, delete, tags, all)
 GET {{HabitTracker.Api_HostAddress}}/api/habits/{{habitId}}
+Authorization: Bearer {{accessToken}}
 Accept: application/json
 
 ### Update a Habit (PUT - full replacement, all fields required)
 PUT {{HabitTracker.Api_HostAddress}}/api/habits/{{habitId}}
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
@@ -113,6 +126,7 @@ Content-Type: application/json
 
 ### Partially Update a Habit (PATCH - selective update, only changed fields)
 PATCH {{HabitTracker.Api_HostAddress}}/api/habits/{{habitId}}
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
@@ -124,6 +138,7 @@ Content-Type: application/json
 
 ### Delete a Habit (replace {habitId} with actual ID)
 DELETE {{HabitTracker.Api_HostAddress}}/api/habits/{{habitId}}
+Authorization: Bearer {{accessToken}}
 Accept: application/hal+json
 # Accept: application/json
 
