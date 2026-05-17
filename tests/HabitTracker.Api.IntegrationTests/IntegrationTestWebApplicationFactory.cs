@@ -30,25 +30,10 @@ public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory
     public IntegrationTestWebApplicationFactory()
     {
         postgreSqlContainer.StartAsync().GetAwaiter().GetResult();
-
-        // WebApplicationBuilder reads environment variables very early during bootstrapping.
-        Environment.SetEnvironmentVariable("Jwt__Issuer", TestIssuer);
-        Environment.SetEnvironmentVariable("Jwt__Audience", TestAudience);
-        Environment.SetEnvironmentVariable("Jwt__Key", TestSigningKey);
-        Environment.SetEnvironmentVariable("Jwt__AccessTokenMinutes", "30");
-        Environment.SetEnvironmentVariable("Jwt__RefreshTokenDays", "7");
-        Environment.SetEnvironmentVariable("ConnectionStrings__Database", postgreSqlContainer.GetConnectionString());
     }
 
     public override async ValueTask DisposeAsync()
     {
-        Environment.SetEnvironmentVariable("Jwt__Issuer", null);
-        Environment.SetEnvironmentVariable("Jwt__Audience", null);
-        Environment.SetEnvironmentVariable("Jwt__Key", null);
-        Environment.SetEnvironmentVariable("Jwt__AccessTokenMinutes", null);
-        Environment.SetEnvironmentVariable("Jwt__RefreshTokenDays", null);
-        Environment.SetEnvironmentVariable("ConnectionStrings__Database", null);
-
         await postgreSqlContainer.DisposeAsync();
         await base.DisposeAsync();
     }
@@ -58,6 +43,13 @@ public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory
         ArgumentNullException.ThrowIfNull(builder);
 
         builder.UseEnvironment("Testing");
+
+        builder.UseSetting("Jwt:Issuer", TestIssuer);
+        builder.UseSetting("Jwt:Audience", TestAudience);
+        builder.UseSetting("Jwt:Key", TestSigningKey);
+        builder.UseSetting("Jwt:AccessTokenMinutes", "30");
+        builder.UseSetting("Jwt:RefreshTokenDays", "7");
+        builder.UseSetting("ConnectionStrings:Database", postgreSqlContainer.GetConnectionString());
 
         builder.ConfigureServices(services =>
         {
