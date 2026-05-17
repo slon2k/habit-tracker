@@ -3,6 +3,7 @@
     <Project Path="src/HabitTracker.Api/HabitTracker.Api.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/HabitTracker.Api.IntegrationTests/HabitTracker.Api.IntegrationTests.csproj" />
     <Project Path="tests/HabitTracker.Api.UnitTests/HabitTracker.Api.UnitTests.csproj" />
   </Folder>
 </Solution>

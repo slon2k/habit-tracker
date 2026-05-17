@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="HabitTracker.Api.UnitTests" />
+    <InternalsVisibleTo Include="HabitTracker.Api.IntegrationTests" />
   </ItemGroup>
 
 </Project>

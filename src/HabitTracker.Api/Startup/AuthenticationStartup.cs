@@ -32,7 +32,6 @@ public static class AuthenticationStartup
             .AddAuthentication(options => options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                options.Authority = jwtOptions.Issuer;
                 options.Audience = jwtOptions.Audience;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
