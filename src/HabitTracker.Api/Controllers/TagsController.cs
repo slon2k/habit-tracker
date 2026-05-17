@@ -18,6 +18,8 @@ public class TagsController(ApplicationDbContext dbContext) : BaseApiController(
     /// </summary>
     /// <returns>List of tags as DTOs, ordered by creation date.</returns>
     [HttpGet]
+    [ProducesResponseType(typeof(List<TagDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetTags(CancellationToken cancellationToken)
     {
         var currentUser = await GetCurrentUserAsync(cancellationToken);
@@ -39,6 +41,9 @@ public class TagsController(ApplicationDbContext dbContext) : BaseApiController(
     /// <param name="tagId">The tag ID.</param>
     /// <returns>The tag as a DTO, or 404 if not found or not owned by the user.</returns>
     [HttpGet("{tagId:guid}")]
+    [ProducesResponseType(typeof(TagDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTag(Guid tagId, CancellationToken cancellationToken)
     {
         var currentUser = await GetCurrentUserAsync(cancellationToken);
@@ -58,6 +63,10 @@ public class TagsController(ApplicationDbContext dbContext) : BaseApiController(
     /// <param name="request">The tag creation request.</param>
     /// <returns>The created tag as a DTO with 201 Created status.</returns>
     [HttpPost]
+    [ProducesResponseType(typeof(TagDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CreateTag([FromBody] CreateTagDto request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -98,6 +107,11 @@ public class TagsController(ApplicationDbContext dbContext) : BaseApiController(
     /// <param name="request">The update request containing the new name.</param>
     /// <returns>The updated tag as a DTO, or 404 if not found or not owned by the user.</returns>
     [HttpPut("{tagId:guid}")]
+    [ProducesResponseType(typeof(TagDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> UpdateTag(Guid tagId, [FromBody] CreateTagDto request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -143,6 +157,9 @@ public class TagsController(ApplicationDbContext dbContext) : BaseApiController(
     /// <param name="tagId">The tag ID.</param>
     /// <returns>204 No Content on success, or 404 if not found or not owned by the user.</returns>
     [HttpDelete("{tagId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteTag(Guid tagId, CancellationToken cancellationToken)
     {
         var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);

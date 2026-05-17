@@ -63,7 +63,6 @@ public sealed class Habit
     /// <summary>
     /// Creates a new habit with the specified parameters.
     /// </summary>
-    /// <param name="id">The unique identifier for this habit. If not provided, a new Guid is generated.</param>
     /// <param name="userId">The user who owns this habit.</param>
     /// <param name="name">The name of the habit. Must not be empty.</param>
     /// <param name="description">Optional description of the habit.</param>

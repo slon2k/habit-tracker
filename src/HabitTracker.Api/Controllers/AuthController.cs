@@ -19,7 +19,15 @@ public sealed class AuthController(
     ITokenService tokenService,
     ApplicationDbContext applicationDbContext) : ControllerBase
 {
+    /// <summary>
+    /// Registers a new user with email, password, and name.
+    /// </summary>
+    /// <param name="registerUserDto">The registration request DTO.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>201 Created with user ID, or 400 if registration fails.</returns>
     [HttpPost("register")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register(RegisterUserDto registerUserDto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(registerUserDto);
@@ -55,7 +63,15 @@ public sealed class AuthController(
         return CreatedAtRoute("GetUserById", new { id = appUser.Id }, new { appUser.Id });
     }
 
+    /// <summary>
+    /// Authenticates a user and returns access and refresh tokens.
+    /// </summary>
+    /// <param name="loginDto">The login request DTO.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>200 OK with tokens, or 401 if authentication fails.</returns>
     [HttpPost("login")]
+    [ProducesResponseType(typeof(LoginResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login(LoginDto loginDto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(loginDto);
@@ -90,7 +106,15 @@ public sealed class AuthController(
         return Ok(dto);
     }
 
+    /// <summary>
+    /// Refreshes the access token using a valid refresh token.
+    /// </summary>
+    /// <param name="refreshTokenDto">The refresh token request DTO.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>200 OK with new tokens, or 401 if refresh fails.</returns>
     [HttpPost("refresh")]
+    [ProducesResponseType(typeof(LoginResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Refresh(RefreshTokenDto refreshTokenDto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(refreshTokenDto);

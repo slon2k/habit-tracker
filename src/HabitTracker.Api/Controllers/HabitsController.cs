@@ -21,6 +21,8 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
     /// <returns>Paginated list of habits as DTOs with pagination metadata. Includes HATEOAS links for HAL clients.</returns>
     [HttpGet]
     [Produces("application/json", "application/hal+json")]
+    [ProducesResponseType(typeof(HalPagedResult<HabitDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetHabits([FromQuery] HabitsQueryParameters? queryParameters, CancellationToken cancellationToken)
     {
         var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);
@@ -52,6 +54,9 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
     /// <returns>The habit details as a DTO (including tags), with HATEOAS links for HAL clients, or 404 if not found or not owned by the user.</returns>
     [HttpGet("{habitId:guid}")]
     [Produces("application/json", "application/hal+json")]
+    [ProducesResponseType(typeof(HalResult<HabitDetailsDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetHabit(Guid habitId, CancellationToken cancellationToken)
     {
         var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);
@@ -91,6 +96,9 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
     /// <returns>The created habit as a DTO with 201 Created status, with HATEOAS links for HAL clients.</returns>
     [HttpPost]
     [Produces("application/json", "application/hal+json")]
+    [ProducesResponseType(typeof(HabitDetailsDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateHabit([FromBody] CreateHabitDto request, CancellationToken cancellationToken)
     {
         var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);
@@ -127,6 +135,10 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
     /// <param name="request">The complete replacement request.</param>
     /// <returns>The replaced habit as a DTO, or 404 if not found or not owned by the user.</returns>
     [HttpPut("{habitId:guid}")]
+    [ProducesResponseType(typeof(HabitDetailsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateHabit(Guid habitId, [FromBody] UpdateHabitDto request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -163,6 +175,10 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
     /// <param name="request">The partial update request.</param>
     /// <returns>The updated habit as a DTO, or 404 if not found or not owned by the user.</returns>
     [HttpPatch("{habitId:guid}")]
+    [ProducesResponseType(typeof(HabitDetailsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> PatchHabit(Guid habitId, [FromBody] PartialUpdateHabitDto request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -198,6 +214,9 @@ public class HabitsController(ApplicationDbContext dbContext) : BaseApiControlle
     /// <param name="habitId">The habit ID.</param>
     /// <returns>204 No Content on success, 404 if not found or not owned by the user.</returns>
     [HttpDelete("{habitId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteHabit(Guid habitId, CancellationToken cancellationToken = default)
     {
         var (currentUser, error) = await GetCurrentUserOrUnauthorizedAsync(cancellationToken);

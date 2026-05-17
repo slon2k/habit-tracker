@@ -16,7 +16,15 @@ public sealed class UserRolesController(
     UserManager<IdentityUser> userManager,
     RoleManager<IdentityRole> roleManager) : BaseApiController(applicationDbContext)
 {
+    /// <summary>
+    /// Lists all roles assigned to a user.
+    /// </summary>
+    /// <param name="userId">The user ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>200 OK with roles, or 404 if user not found.</returns>
     [HttpGet]
+    [ProducesResponseType(typeof(UserRolesDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ListUserRoles(Guid userId, CancellationToken cancellationToken)
     {
         var identityUser = await FindIdentityUserByAppUserIdAsync(userId, cancellationToken);
@@ -31,7 +39,17 @@ public sealed class UserRolesController(
         return Ok(dto);
     }
 
+    /// <summary>
+    /// Assigns a role to a user.
+    /// </summary>
+    /// <param name="userId">The user ID.</param>
+    /// <param name="role">The role to assign.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>200 OK if assigned, or 404 if user not found.</returns>
     [HttpPut("{role}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AssignRoleToUser(Guid userId, AppRole role, CancellationToken cancellationToken)
     {
         var identityUser = await FindIdentityUserByAppUserIdAsync(userId, cancellationToken);
@@ -65,7 +83,17 @@ public sealed class UserRolesController(
             : NoContent();
     }
 
+    /// <summary>
+    /// Removes a role from a user.
+    /// </summary>
+    /// <param name="userId">The user ID.</param>
+    /// <param name="role">The role to remove.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>200 OK if removed, or 404 if user not found.</returns>
     [HttpDelete("{role}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RemoveRoleFromUser(Guid userId, AppRole role, CancellationToken cancellationToken)
     {
         var identityUser = await FindIdentityUserByAppUserIdAsync(userId, cancellationToken);

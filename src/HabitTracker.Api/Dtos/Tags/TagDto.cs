@@ -5,6 +5,12 @@ using HabitTracker.Api.Entities;
 /// <summary>
 /// Represents a tag in API responses. Excludes UserId for security.
 /// </summary>
+/// <summary>
+/// Tag DTO for API responses.
+/// </summary>
+/// <param name="Id">Tag unique identifier.</param>
+/// <param name="Name">Tag name.</param>
+/// <param name="CreatedAtUtc">Tag creation date (UTC).</param>
 public record TagDto(
     Guid Id,
     string Name,
