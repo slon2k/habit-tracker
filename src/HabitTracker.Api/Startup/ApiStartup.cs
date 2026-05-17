@@ -27,6 +27,7 @@ public static class ApiStartup
         builder.Services.AddHealthChecks();
         builder.Services.AddOpenApi();
         builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
 
         return builder;
     }

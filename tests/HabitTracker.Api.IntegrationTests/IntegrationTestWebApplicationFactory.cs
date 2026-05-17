@@ -21,8 +21,7 @@ public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory
     private const string TestAudience = "habit-tracker-tests-clients";
     private const string TestSigningKey = "integration-tests-signing-key-123456";
 
-    private readonly PostgreSqlContainer postgreSqlContainer = new PostgreSqlBuilder()
-        .WithImage("postgres:17-alpine")
+    private readonly PostgreSqlContainer postgreSqlContainer = new PostgreSqlBuilder("postgres:17-alpine")
         .WithDatabase("habittracker_tests")
         .WithUsername("postgres")
         .WithPassword("postgres")
