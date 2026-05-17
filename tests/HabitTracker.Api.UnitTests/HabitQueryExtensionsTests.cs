@@ -7,7 +7,7 @@ namespace HabitTracker.Api.UnitTests;
 public sealed class HabitQueryExtensionsTests
 {
     [Fact]
-    public void ApplySortingWhenSortIsNullUsesDefaultOrdering()
+    public void ApplySorting_WhenSortIsNull_UsesDefaultOrdering()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -26,7 +26,7 @@ public sealed class HabitQueryExtensionsTests
     }
 
     [Fact]
-    public void ApplySortingWhenSortByNameAscSortsAlphabetically()
+    public void ApplySorting_WhenSortByNameAsc_SortsAlphabetically()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -49,7 +49,7 @@ public sealed class HabitQueryExtensionsTests
     }
 
     [Fact]
-    public void ApplySortingWhenSortByStatusThenNameAppliesMultiColumnOrder()
+    public void ApplySorting_WhenSortByStatusThenName_AppliesMultiColumnOrder()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -76,7 +76,7 @@ public sealed class HabitQueryExtensionsTests
     [InlineData("unknown:asc")]
     [InlineData("name:sideways")]
     [InlineData(":asc")]
-    public void ApplySortingWhenSortIsInvalidThrowsArgumentException(string sort)
+    public void ApplySorting_WhenSortIsInvalid_ThrowsArgumentException(string sort)
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -90,7 +90,7 @@ public sealed class HabitQueryExtensionsTests
     }
 
     [Fact]
-    public void ApplyFilteringWhenQueryParametersNullReturnsOriginalSet()
+    public void ApplyFiltering_WhenQueryParametersNull_ReturnsOriginalSet()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -108,7 +108,7 @@ public sealed class HabitQueryExtensionsTests
     }
 
     [Fact]
-    public void ApplyFilteringWhenSearchTypeAndStatusProvidedReturnsMatchingHabits()
+    public void ApplyFiltering_WhenSearchTypeAndStatusProvided_ReturnsMatchingHabits()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -132,7 +132,7 @@ public sealed class HabitQueryExtensionsTests
     }
 
     [Fact]
-    public void ApplyPaginationWhenInputsValidReturnsExpectedPageSlice()
+    public void ApplyPagination_WhenInputsValid_ReturnsExpectedPageSlice()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -162,7 +162,7 @@ public sealed class HabitQueryExtensionsTests
     [InlineData(0, 10)]
     [InlineData(1, 0)]
     [InlineData(-1, 10)]
-    public void ApplyPaginationWhenInputsInvalidThrowsArgumentException(int pageNumber, int pageSize)
+    public void ApplyPagination_WhenInputsInvalid_ThrowsArgumentException(int pageNumber, int pageSize)
     {
         // Arrange
         var userId = Guid.NewGuid();

@@ -34,6 +34,10 @@ dotnet_diagnostic.CA1303.severity = none
 # CA1031: Catching generic Exception in console utilities/seeders is acceptable.
 dotnet_diagnostic.CA1031.severity = none
 
+# Allow underscore-based test naming like Method_WhenCondition_ExpectedResult in tests only.
+[tests/**/*.cs]
+dotnet_diagnostic.CA1707.severity = none
+
 #### Core EditorConfig Options ####
 
 # Indentation and spacing
