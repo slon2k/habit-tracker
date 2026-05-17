@@ -1,4 +1,4 @@
-namespace HabitTracker.Api.Extensions;
+namespace HabitTracker.Api.Startup;
 
 using HabitTracker.Api.Options;
 
@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-public static class AuthenticationExtensions
+public static class AuthenticationStartup
 {
     public static WebApplicationBuilder AddAuthenticationServices(this WebApplicationBuilder builder)
     {

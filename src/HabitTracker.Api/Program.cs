@@ -1,4 +1,4 @@
-using HabitTracker.Api.Extensions;
+using HabitTracker.Api.Startup;
 using HabitTracker.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);

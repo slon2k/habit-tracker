@@ -1,10 +1,10 @@
-namespace HabitTracker.Api.Extensions;
+namespace HabitTracker.Api.Startup;
 
 using HabitTracker.Api.Data;
 using HabitTracker.Api.Services.Auth;
 using Microsoft.AspNetCore.Identity;
 
-public static class IdentityExtensions
+public static class IdentityStartup
 {
     public static WebApplicationBuilder AddIdentityServices(this WebApplicationBuilder builder)
     {

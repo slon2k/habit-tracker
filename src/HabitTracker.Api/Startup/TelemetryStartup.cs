@@ -3,9 +3,9 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-namespace HabitTracker.Api.Extensions;
+namespace HabitTracker.Api.Startup;
 
-public static class TelemetryExtensions
+public static class TelemetryStartup
 {
     public static WebApplicationBuilder AddTelemetry(this WebApplicationBuilder builder)
     {

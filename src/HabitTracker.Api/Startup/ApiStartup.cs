@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 
-namespace HabitTracker.Api.Extensions;
+namespace HabitTracker.Api.Startup;
 
-public static class ApiServiceExtensions
+public static class ApiStartup
 {
     public static WebApplicationBuilder AddApi(this WebApplicationBuilder builder)
     {

@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace HabitTracker.Api.Extensions;
+namespace HabitTracker.Api.Startup;
 
-public static class DatabaseExtensions
+public static class DatabaseStartup
 {
     public static WebApplicationBuilder AddDatabase(this WebApplicationBuilder builder)
     {
