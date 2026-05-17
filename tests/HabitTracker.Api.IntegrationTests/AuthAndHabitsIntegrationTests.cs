@@ -57,6 +57,112 @@ public sealed class AuthAndHabitsIntegrationTests(IntegrationTestWebApplicationF
     }
 
     [Fact]
+    public async Task Login_WhenPasswordIsWrong_ReturnsUnauthorized()
+    {
+        // Arrange
+        using var client = factory.CreateClient();
+        var email = $"{Guid.NewGuid():N}@example.com";
+        const string password = "StrongPassword123!";
+
+        var registerResponse = await client.PostAsJsonAsync("/api/auth/register", new
+        {
+            Email = email,
+            Name = "Integration User",
+            Password = password,
+            ConfirmPassword = password
+        });
+
+        Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
+
+        // Act
+        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new
+        {
+            Email = email,
+            Password = "WrongPassword123!"
+        });
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, loginResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task Refresh_WhenRefreshTokenIsInvalid_ReturnsUnauthorized()
+    {
+        // Arrange
+        using var client = factory.CreateClient();
+        var login = await RegisterAndLoginWithTokensAsync(client);
+
+        // Act
+        var refreshResponse = await client.PostAsJsonAsync("/api/auth/refresh", new
+        {
+            AccessToken = login.AccessToken,
+            RefreshToken = "invalid-refresh-token"
+        });
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, refreshResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateHabit_WhenAuthenticated_ReturnsCreated()
+    {
+        // Arrange
+        using var client = factory.CreateClient();
+        var token = await RegisterAndLoginAsync(client);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var createResponse = await client.PostAsJsonAsync("/api/habits", new
+        {
+            Name = "Read docs",
+            Description = "Read architecture docs",
+            Type = "Binary",
+            Frequency = new
+            {
+                Type = "Daily",
+                TimesPerPeriod = 1
+            }
+        });
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetHabits_WhenAuthenticated_ReturnsCreatedItem()
+    {
+        // Arrange
+        using var client = factory.CreateClient();
+        var token = await RegisterAndLoginAsync(client);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var createResponse = await client.PostAsJsonAsync("/api/habits", new
+        {
+            Name = "Read docs",
+            Description = "Read architecture docs",
+            Type = "Binary",
+            Frequency = new
+            {
+                Type = "Daily",
+                TimesPerPeriod = 1
+            }
+        });
+
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+
+        // Act
+        var listResponse = await client.GetAsync(new Uri("/api/habits?pageNumber=1&pageSize=10", UriKind.Relative));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
+        using var json = await ReadJsonAsync(listResponse);
+        var items = json.RootElement.GetProperty("items");
+
+        Assert.NotEmpty(items.EnumerateArray());
+        Assert.Contains(items.EnumerateArray(), h => h.GetProperty("name").GetString() == "Read docs");
+    }
+
+    [Fact]
     public async Task GetHabits_WhenAuthenticatedAndFiltered_ThenReturnsExpectedItems()
     {
         // Arrange
@@ -118,7 +224,97 @@ public sealed class AuthAndHabitsIntegrationTests(IntegrationTestWebApplicationF
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact]
+    public async Task GetHabits_WhenSortedByNameAsc_ThenReturnsAscendingOrder()
+    {
+        // Arrange
+        using var client = factory.CreateClient();
+        var token = await RegisterAndLoginAsync(client);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var createZulu = await client.PostAsJsonAsync("/api/habits", new
+        {
+            Name = "Zulu",
+            Description = "Z item",
+            Type = "Binary",
+            Frequency = new
+            {
+                Type = "Daily",
+                TimesPerPeriod = 1
+            }
+        });
+
+        var createAlpha = await client.PostAsJsonAsync("/api/habits", new
+        {
+            Name = "Alpha",
+            Description = "A item",
+            Type = "Binary",
+            Frequency = new
+            {
+                Type = "Daily",
+                TimesPerPeriod = 1
+            }
+        });
+
+        Assert.Equal(HttpStatusCode.Created, createZulu.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, createAlpha.StatusCode);
+
+        // Act
+        var listResponse = await client.GetAsync(new Uri("/api/habits?sort=name:asc&pageNumber=1&pageSize=10", UriKind.Relative));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
+        using var json = await ReadJsonAsync(listResponse);
+        var names = json.RootElement
+            .GetProperty("items")
+            .EnumerateArray()
+            .Select(x => x.GetProperty("name").GetString())
+            .Where(x => x is not null)
+            .Cast<string>()
+            .ToList();
+
+        Assert.True(names.Count >= 2);
+        Assert.Equal("Alpha", names[0]);
+    }
+
+    [Fact]
+    public async Task CreateHabit_WhenPayloadIsInvalid_ReturnsBadRequestValidationProblem()
+    {
+        // Arrange
+        using var client = factory.CreateClient();
+        var token = await RegisterAndLoginAsync(client);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/habits", new
+        {
+            Name = "",
+            Description = "Invalid",
+            Type = "WrongType",
+            Frequency = new
+            {
+                Type = "Daily",
+                TimesPerPeriod = 0
+            }
+        });
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.StartsWith("application/json", response.Content.Headers.ContentType?.MediaType, StringComparison.OrdinalIgnoreCase);
+
+        using var json = await ReadJsonAsync(response);
+        Assert.Equal(400, json.RootElement.GetProperty("status").GetInt32());
+        Assert.True(json.RootElement.TryGetProperty("errors", out var errors));
+        Assert.Equal(JsonValueKind.Object, errors.ValueKind);
+    }
+
     private static async Task<string> RegisterAndLoginAsync(HttpClient client)
+    {
+        var login = await RegisterAndLoginWithTokensAsync(client);
+        return login.AccessToken;
+    }
+
+    private static async Task<LoginTokens> RegisterAndLoginWithTokensAsync(HttpClient client)
     {
         var email = $"{Guid.NewGuid():N}@example.com";
         const string password = "StrongPassword123!";
@@ -143,9 +339,11 @@ public sealed class AuthAndHabitsIntegrationTests(IntegrationTestWebApplicationF
 
         using var json = await ReadJsonAsync(loginResponse);
         var accessToken = json.RootElement.GetProperty("accessToken").GetString();
+        var refreshToken = json.RootElement.GetProperty("refreshToken").GetString();
         Assert.False(string.IsNullOrWhiteSpace(accessToken));
+        Assert.False(string.IsNullOrWhiteSpace(refreshToken));
 
-        return accessToken!;
+        return new LoginTokens(accessToken!, refreshToken!);
     }
 
     private static async Task<JsonDocument> ReadJsonAsync(HttpResponseMessage response)
@@ -153,4 +351,6 @@ public sealed class AuthAndHabitsIntegrationTests(IntegrationTestWebApplicationF
         var content = await response.Content.ReadAsStringAsync();
         return JsonDocument.Parse(content);
     }
+
+    private sealed record LoginTokens(string AccessToken, string RefreshToken);
 }
