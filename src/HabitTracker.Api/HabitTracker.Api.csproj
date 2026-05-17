@@ -21,4 +21,8 @@
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="HabitTracker.Api.UnitTests" />
+  </ItemGroup>
+
 </Project>
