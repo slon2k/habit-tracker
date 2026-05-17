@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.OpenApi;
 
 namespace HabitTracker.Api.Startup;
 
@@ -35,6 +37,21 @@ public static class ApiStartup
             {
                 options.IncludeXmlComments(xmlPath);
             }
+
+            // Add JWT Bearer security definition
+            options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = JwtBearerDefaults.AuthenticationScheme,
+                BearerFormat = "JWT",
+                Description = "Enter your JWT token"
+            });
+
+            // Apply security requirement to all endpoints
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("bearer", document)] = []
+            });
         });
 
         return builder;
