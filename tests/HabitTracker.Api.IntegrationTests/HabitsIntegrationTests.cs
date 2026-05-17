@@ -5,110 +5,15 @@ using System.Text.Json;
 
 namespace HabitTracker.Api.IntegrationTests;
 
-public sealed class AuthAndHabitsIntegrationTests(IntegrationTestWebApplicationFactory factory)
-    : IClassFixture<IntegrationTestWebApplicationFactory>
+[Collection("IntegrationTests")]
+public sealed class HabitsIntegrationTests(IntegrationTestWebApplicationFactory factory)
 {
-    [Fact]
-    public async Task AuthFlow_WhenRegisterLoginRefresh_ThenReturnsTokens()
-    {
-        // Arrange
-        using var client = factory.CreateClient();
-        var email = $"{Guid.NewGuid():N}@example.com";
-        const string password = "StrongPassword123!";
-
-        // Act
-        var registerResponse = await client.PostAsJsonAsync("/api/auth/register", new
-        {
-            Email = email,
-            Name = "Integration User",
-            Password = password,
-            ConfirmPassword = password
-        });
-
-        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new
-        {
-            Email = email,
-            Password = password
-        });
-
-        // Assert register/login
-        Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
-        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
-
-        using var loginJson = await ReadJsonAsync(loginResponse);
-        var accessToken = loginJson.RootElement.GetProperty("accessToken").GetString();
-        var refreshToken = loginJson.RootElement.GetProperty("refreshToken").GetString();
-
-        Assert.False(string.IsNullOrWhiteSpace(accessToken));
-        Assert.False(string.IsNullOrWhiteSpace(refreshToken));
-
-        // Act refresh
-        var refreshResponse = await client.PostAsJsonAsync("/api/auth/refresh", new
-        {
-            AccessToken = accessToken,
-            RefreshToken = refreshToken
-        });
-
-        // Assert refresh
-        Assert.Equal(HttpStatusCode.OK, refreshResponse.StatusCode);
-        using var refreshJson = await ReadJsonAsync(refreshResponse);
-        Assert.False(string.IsNullOrWhiteSpace(refreshJson.RootElement.GetProperty("accessToken").GetString()));
-        Assert.False(string.IsNullOrWhiteSpace(refreshJson.RootElement.GetProperty("refreshToken").GetString()));
-    }
-
-    [Fact]
-    public async Task Login_WhenPasswordIsWrong_ReturnsUnauthorized()
-    {
-        // Arrange
-        using var client = factory.CreateClient();
-        var email = $"{Guid.NewGuid():N}@example.com";
-        const string password = "StrongPassword123!";
-
-        var registerResponse = await client.PostAsJsonAsync("/api/auth/register", new
-        {
-            Email = email,
-            Name = "Integration User",
-            Password = password,
-            ConfirmPassword = password
-        });
-
-        Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
-
-        // Act
-        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new
-        {
-            Email = email,
-            Password = "WrongPassword123!"
-        });
-
-        // Assert
-        Assert.Equal(HttpStatusCode.Unauthorized, loginResponse.StatusCode);
-    }
-
-    [Fact]
-    public async Task Refresh_WhenRefreshTokenIsInvalid_ReturnsUnauthorized()
-    {
-        // Arrange
-        using var client = factory.CreateClient();
-        var login = await RegisterAndLoginWithTokensAsync(client);
-
-        // Act
-        var refreshResponse = await client.PostAsJsonAsync("/api/auth/refresh", new
-        {
-            AccessToken = login.AccessToken,
-            RefreshToken = "invalid-refresh-token"
-        });
-
-        // Assert
-        Assert.Equal(HttpStatusCode.Unauthorized, refreshResponse.StatusCode);
-    }
-
     [Fact]
     public async Task CreateHabit_WhenAuthenticated_ReturnsCreated()
     {
         // Arrange
         using var client = factory.CreateClient();
-        var token = await RegisterAndLoginAsync(client);
+        var token = await TestAuthHelpers.RegisterAndLoginAsync(client);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -133,7 +38,7 @@ public sealed class AuthAndHabitsIntegrationTests(IntegrationTestWebApplicationF
     {
         // Arrange
         using var client = factory.CreateClient();
-        var token = await RegisterAndLoginAsync(client);
+        var token = await TestAuthHelpers.RegisterAndLoginAsync(client);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var createResponse = await client.PostAsJsonAsync("/api/habits", new
@@ -155,7 +60,7 @@ public sealed class AuthAndHabitsIntegrationTests(IntegrationTestWebApplicationF
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
-        using var json = await ReadJsonAsync(listResponse);
+        using var json = await TestAuthHelpers.ReadJsonAsync(listResponse);
         var items = json.RootElement.GetProperty("items");
 
         Assert.NotEmpty(items.EnumerateArray());
@@ -167,7 +72,7 @@ public sealed class AuthAndHabitsIntegrationTests(IntegrationTestWebApplicationF
     {
         // Arrange
         using var client = factory.CreateClient();
-        var token = await RegisterAndLoginAsync(client);
+        var token = await TestAuthHelpers.RegisterAndLoginAsync(client);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var createReadResponse = await client.PostAsJsonAsync("/api/habits", new
@@ -203,7 +108,7 @@ public sealed class AuthAndHabitsIntegrationTests(IntegrationTestWebApplicationF
 
         // Assert list
         Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
-        using var json = await ReadJsonAsync(listResponse);
+        using var json = await TestAuthHelpers.ReadJsonAsync(listResponse);
         var items = json.RootElement.GetProperty("items");
 
         Assert.Equal(JsonValueKind.Array, items.ValueKind);
@@ -229,7 +134,7 @@ public sealed class AuthAndHabitsIntegrationTests(IntegrationTestWebApplicationF
     {
         // Arrange
         using var client = factory.CreateClient();
-        var token = await RegisterAndLoginAsync(client);
+        var token = await TestAuthHelpers.RegisterAndLoginAsync(client);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var createZulu = await client.PostAsJsonAsync("/api/habits", new
@@ -264,7 +169,7 @@ public sealed class AuthAndHabitsIntegrationTests(IntegrationTestWebApplicationF
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
-        using var json = await ReadJsonAsync(listResponse);
+        using var json = await TestAuthHelpers.ReadJsonAsync(listResponse);
         var names = json.RootElement
             .GetProperty("items")
             .EnumerateArray()
@@ -282,7 +187,7 @@ public sealed class AuthAndHabitsIntegrationTests(IntegrationTestWebApplicationF
     {
         // Arrange
         using var client = factory.CreateClient();
-        var token = await RegisterAndLoginAsync(client);
+        var token = await TestAuthHelpers.RegisterAndLoginAsync(client);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -302,55 +207,9 @@ public sealed class AuthAndHabitsIntegrationTests(IntegrationTestWebApplicationF
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.StartsWith("application/json", response.Content.Headers.ContentType?.MediaType, StringComparison.OrdinalIgnoreCase);
 
-        using var json = await ReadJsonAsync(response);
+        using var json = await TestAuthHelpers.ReadJsonAsync(response);
         Assert.Equal(400, json.RootElement.GetProperty("status").GetInt32());
         Assert.True(json.RootElement.TryGetProperty("errors", out var errors));
         Assert.Equal(JsonValueKind.Object, errors.ValueKind);
     }
-
-    private static async Task<string> RegisterAndLoginAsync(HttpClient client)
-    {
-        var login = await RegisterAndLoginWithTokensAsync(client);
-        return login.AccessToken;
-    }
-
-    private static async Task<LoginTokens> RegisterAndLoginWithTokensAsync(HttpClient client)
-    {
-        var email = $"{Guid.NewGuid():N}@example.com";
-        const string password = "StrongPassword123!";
-
-        var registerResponse = await client.PostAsJsonAsync("/api/auth/register", new
-        {
-            Email = email,
-            Name = "Integration User",
-            Password = password,
-            ConfirmPassword = password
-        });
-
-        Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
-
-        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new
-        {
-            Email = email,
-            Password = password
-        });
-
-        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
-
-        using var json = await ReadJsonAsync(loginResponse);
-        var accessToken = json.RootElement.GetProperty("accessToken").GetString();
-        var refreshToken = json.RootElement.GetProperty("refreshToken").GetString();
-        Assert.False(string.IsNullOrWhiteSpace(accessToken));
-        Assert.False(string.IsNullOrWhiteSpace(refreshToken));
-
-        return new LoginTokens(accessToken!, refreshToken!);
-    }
-
-    private static async Task<JsonDocument> ReadJsonAsync(HttpResponseMessage response)
-    {
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonDocument.Parse(content);
-    }
-
-    private sealed record LoginTokens(string AccessToken, string RefreshToken);
 }
